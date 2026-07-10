@@ -305,7 +305,7 @@ p {
 
 .state-card {
   animation: card-rise 390ms both var(--ease-settle);
-  animation-delay: var(--delay);
+  animation-delay: var(--motion-delay);
   background:
     radial-gradient(circle at 92% 8%, var(--tone-glow), transparent 48%),
     var(--tone-wash);

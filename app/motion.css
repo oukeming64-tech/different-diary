@@ -1,0 +1,1501 @@
+/*
+ * Soft Tide motion layer
+ *
+ * Sol wiring:
+ * 1. Import this file AFTER globals.css:
+ *      import "./globals.css";
+ *      import "./motion.css";
+ * 2. The current class names already activate the full baseline motion system.
+ * 3. Optional navigation direction hooks on the active .screen element:
+ *      .motion-forward  — home -> branch -> reply -> write/saved
+ *      .motion-back     — return to a previous view
+ *      .motion-still    — skip the page transition for programmatic refreshes
+ *    Example: className="screen branch-screen screen-enter motion-forward"
+ *
+ * Performance boundary: ambient layers are only two CSS pseudo-elements; long
+ * motion changes transform/opacity only. Filter values are static. Content
+ * animations are short, one-shot, and release their transform after finishing.
+ */
+
+:root {
+  --motion-press: 110ms;
+  --motion-control: 210ms;
+  --motion-page: 480ms;
+  --motion-reveal: 560ms;
+  --motion-sheet: 620ms;
+  --motion-ambient: 18s;
+  --motion-ease-out: cubic-bezier(0.2, 0.78, 0.2, 1);
+  --motion-ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-breathe: cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Aurora room: a visible atmosphere behind every screen                      */
+/* -------------------------------------------------------------------------- */
+
+.motion-stage {
+  background:
+    linear-gradient(145deg, rgba(248, 236, 226, 0.9), rgba(226, 237, 239, 0.86) 48%, rgba(235, 227, 244, 0.88)),
+    var(--c-canvas);
+  isolation: isolate;
+}
+
+.ambient-scene {
+  contain: paint;
+  inset: 0;
+  overflow: hidden;
+  position: fixed;
+  z-index: 0;
+}
+
+.ambient-scene__auroras,
+.ambient-scene__haze,
+.ambient-scene__orbit,
+.ambient-scene__dust {
+  inset: 0;
+  position: absolute;
+}
+
+.ambient-scene__aurora {
+  border-radius: 50%;
+  filter: blur(64px) saturate(1.12);
+  height: clamp(20rem, 54vmax, 46rem);
+  opacity: 0.28;
+  position: absolute;
+  width: clamp(20rem, 54vmax, 46rem);
+  will-change: transform;
+}
+
+.ambient-scene__aurora--food {
+  animation: ambient-aurora-one 24s infinite alternate var(--motion-ease-breathe);
+  background: rgba(238, 151, 98, 0.46);
+  left: -18%;
+  top: -25%;
+}
+
+.ambient-scene__aurora--rest {
+  animation: ambient-aurora-two 29s -8s infinite alternate var(--motion-ease-breathe);
+  background: rgba(99, 171, 205, 0.42);
+  right: -23%;
+  top: 5%;
+}
+
+.ambient-scene__aurora--tired {
+  animation: ambient-aurora-three 27s -13s infinite alternate var(--motion-ease-breathe);
+  background: rgba(100, 168, 122, 0.4);
+  bottom: -32%;
+  left: -14%;
+}
+
+.ambient-scene__aurora--sit {
+  animation: ambient-aurora-four 31s -5s infinite alternate var(--motion-ease-breathe);
+  background: rgba(145, 112, 191, 0.4);
+  bottom: -26%;
+  right: -22%;
+}
+
+.ambient-scene[data-tone="food"] .ambient-scene__aurora,
+.ambient-scene[data-tone="rest"] .ambient-scene__aurora,
+.ambient-scene[data-tone="tired"] .ambient-scene__aurora,
+.ambient-scene[data-tone="sit"] .ambient-scene__aurora,
+.ambient-scene[data-tone="memory"] .ambient-scene__aurora {
+  opacity: 0.15;
+}
+
+.ambient-scene[data-tone="food"] .ambient-scene__aurora--food,
+.ambient-scene[data-tone="rest"] .ambient-scene__aurora--rest,
+.ambient-scene[data-tone="tired"] .ambient-scene__aurora--tired,
+.ambient-scene[data-tone="sit"] .ambient-scene__aurora--sit {
+  opacity: 0.48;
+}
+
+.ambient-scene[data-tone="memory"] .ambient-scene__aurora--rest,
+.ambient-scene[data-tone="memory"] .ambient-scene__aurora--tired {
+  opacity: 0.3;
+}
+
+.ambient-scene__haze {
+  border-radius: 50%;
+  filter: blur(26px);
+}
+
+.ambient-scene__haze--near {
+  animation: ambient-haze-breathe 12s infinite alternate var(--motion-ease-breathe);
+  background: radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.62), transparent 58%);
+  opacity: 0.42;
+  transform: scale(0.88);
+}
+
+.ambient-scene__haze--far {
+  animation: ambient-haze-breathe 17s -6s infinite alternate-reverse var(--motion-ease-breathe);
+  background: radial-gradient(circle at 48% 52%, transparent 34%, rgba(255, 255, 255, 0.24) 52%, transparent 72%);
+  opacity: 0.28;
+}
+
+.ambient-scene__orbit {
+  border-radius: 50%;
+  height: min(88vmax, 56rem);
+  left: 50%;
+  top: 50%;
+  width: min(88vmax, 56rem);
+}
+
+.ambient-scene__orbit--wide {
+  animation: ambient-orbit-spin 52s linear infinite;
+  transform: translate3d(-50%, -50%, 0) rotate(-14deg);
+}
+
+.ambient-scene__orbit--close {
+  animation: ambient-orbit-spin-reverse 37s linear infinite;
+  height: min(62vmax, 38rem);
+  width: min(62vmax, 38rem);
+}
+
+.ambient-scene__orbit-line {
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 50%;
+  inset: 0;
+  position: absolute;
+}
+
+.ambient-scene__light {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 0 1.5rem rgba(255, 255, 255, 0.88);
+  height: 0.42rem;
+  position: absolute;
+  width: 0.42rem;
+}
+
+.ambient-scene__light--one {
+  left: 12%;
+  top: 20%;
+}
+
+.ambient-scene__light--two {
+  bottom: 14%;
+  right: 18%;
+}
+
+.ambient-scene__light--three {
+  right: 7%;
+  top: 42%;
+}
+
+.ambient-scene__mote {
+  animation: ambient-mote-float 10s infinite alternate var(--motion-ease-breathe);
+  background: rgba(255, 255, 255, 0.68);
+  border-radius: 50%;
+  box-shadow: 0 0 0.9rem rgba(255, 255, 255, 0.65);
+  height: 0.22rem;
+  position: absolute;
+  width: 0.22rem;
+}
+
+.ambient-scene__mote--one { left: 12%; top: 26%; }
+.ambient-scene__mote--two { animation-delay: -4s; left: 82%; top: 18%; }
+.ambient-scene__mote--three { animation-delay: -7s; left: 76%; top: 72%; }
+.ambient-scene__mote--four { animation-delay: -2s; left: 24%; top: 82%; }
+.ambient-scene__mote--five { animation-delay: -5s; left: 58%; top: 10%; }
+
+.ambient-scene__signal {
+  align-items: center;
+  animation: ambient-signal-breathe 7s infinite alternate var(--motion-ease-breathe);
+  bottom: 2rem;
+  color: rgba(40, 39, 34, 0.42);
+  display: flex;
+  font-size: 0.7rem;
+  gap: 0.55rem;
+  left: 2rem;
+  letter-spacing: 0.08em;
+  position: absolute;
+}
+
+.ambient-scene__signal-ring {
+  border: 1px solid rgba(255, 255, 255, 0.76);
+  border-radius: 50%;
+  height: 2.4rem;
+  position: absolute;
+  width: 2.4rem;
+}
+
+.ambient-scene__signal-mark {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.66);
+  border-radius: 50%;
+  display: inline-flex;
+  font-weight: 780;
+  height: 1.85rem;
+  justify-content: center;
+  width: 1.85rem;
+}
+
+.ambient-scene__signal-copy {
+  margin-left: 0.18rem;
+}
+
+.motion-surface {
+  backdrop-filter: blur(28px) saturate(1.04);
+  background: rgba(250, 248, 244, 0.75);
+  box-shadow:
+    0 2rem 7rem rgba(45, 45, 56, 0.16),
+    0 0 0 1px rgba(255, 255, 255, 0.52) inset,
+    0 0 5rem rgba(255, 255, 255, 0.22);
+  z-index: 2;
+}
+
+.branch-screen,
+.reply-screen,
+.writing-screen,
+.saved-screen,
+.detail-screen {
+  --tone-glass: rgba(230, 222, 239, 0.72);
+  background:
+    radial-gradient(circle at 82% 2%, var(--tone-glow), transparent 22rem),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.76), var(--tone-glass));
+}
+
+[data-tone="food"] { --tone-glass: rgba(242, 215, 197, 0.72); }
+[data-tone="rest"] { --tone-glass: rgba(219, 232, 239, 0.74); }
+[data-tone="tired"] { --tone-glass: rgba(220, 233, 221, 0.74); }
+[data-tone="visit"] { --tone-glass: rgba(230, 222, 240, 0.74); }
+
+.timeline-screen,
+.data-screen {
+  background:
+    radial-gradient(circle at 84% 2%, rgba(115, 150, 140, 0.15), transparent 18rem),
+    rgba(250, 249, 246, 0.82);
+}
+
+.motion-hero h1 {
+  background: linear-gradient(110deg, #242521 12%, #514b55 54%, #2e4f4a 100%);
+  background-clip: text;
+  color: transparent;
+}
+
+.motion-hero .soft-kicker svg {
+  animation: motion-sparkle-float 5.5s infinite var(--motion-ease-breathe);
+}
+
+.motion-state-card {
+  backdrop-filter: blur(14px) saturate(1.05);
+  box-shadow:
+    0 0.75rem 2.2rem color-mix(in srgb, var(--tone-accent) 10%, transparent),
+    0 1px 0 rgba(255, 255, 255, 0.82) inset;
+  overflow: hidden;
+}
+
+.motion-state-card::before {
+  animation: motion-card-sheen 8.5s -2s infinite var(--motion-ease-breathe);
+  background: linear-gradient(112deg, transparent 20%, rgba(255, 255, 255, 0.42) 48%, transparent 74%);
+  content: "";
+  inset: -45% -75%;
+  pointer-events: none;
+  position: absolute;
+  transform: translate3d(-28%, 0, 0) rotate(9deg);
+}
+
+.motion-state-card .state-glyph {
+  animation: motion-glyph-breathe 6s infinite alternate var(--motion-ease-breathe);
+  box-shadow:
+    0 0 1.4rem var(--tone-glow),
+    var(--shadow-keyline);
+}
+
+.motion-state-card:nth-child(2) .state-glyph { animation-delay: -1.5s; }
+.motion-state-card:nth-child(3) .state-glyph { animation-delay: -3s; }
+.motion-state-card:nth-child(4) .state-glyph { animation-delay: -4.5s; }
+
+.brand-orbit {
+  animation: motion-brand-settle 4.8s infinite alternate var(--motion-ease-breathe);
+}
+
+/* AmbientScene uses the single audited rule set above. */
+/* -------------------------------------------------------------------------- */
+/* Immersive, low-stimulation atmosphere                                      */
+/* -------------------------------------------------------------------------- */
+
+.soft-tide-one {
+  animation: motion-tide-left 22s infinite alternate var(--motion-ease-breathe);
+  transform-origin: 45% 52%;
+  will-change: transform, opacity;
+}
+
+.soft-tide-two {
+  animation: motion-tide-right 26s infinite alternate var(--motion-ease-breathe);
+  transform-origin: 56% 46%;
+  will-change: transform, opacity;
+}
+
+.screen {
+  isolation: isolate;
+}
+
+.screen::before,
+.screen::after {
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+}
+
+.screen::before {
+  animation: motion-aurora-drift var(--motion-ambient) infinite alternate
+    var(--motion-ease-breathe);
+  background: radial-gradient(circle, var(--tone-glow) 0%, transparent 68%);
+  filter: blur(32px) saturate(0.94);
+  height: 25rem;
+  opacity: 0.7;
+  right: -9rem;
+  top: -10rem;
+  width: 25rem;
+  will-change: transform, opacity;
+}
+
+.screen::after {
+  animation: motion-light-breathe 14s infinite alternate
+    var(--motion-ease-breathe);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.52) 0%,
+    rgba(255, 255, 255, 0.12) 42%,
+    transparent 72%
+  );
+  bottom: -10rem;
+  filter: blur(24px);
+  height: 23rem;
+  left: -9rem;
+  opacity: 0.34;
+  width: 23rem;
+  will-change: transform, opacity;
+}
+
+.home-screen::before {
+  background: conic-gradient(
+    from 145deg,
+    var(--food-glow),
+    var(--rest-glow),
+    var(--visit-glow),
+    var(--tired-glow),
+    var(--food-glow)
+  );
+  filter: blur(46px) saturate(0.88);
+  opacity: 0.46;
+  right: -8rem;
+  top: 5.5rem;
+}
+
+.timeline-screen::before,
+.data-screen::before {
+  background: conic-gradient(
+    from 210deg,
+    rgba(91, 143, 172, 0.13),
+    rgba(91, 142, 107, 0.12),
+    rgba(125, 99, 159, 0.11),
+    rgba(91, 143, 172, 0.13)
+  );
+  opacity: 0.5;
+}
+
+.screen > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Page and route transitions                                                  */
+/* -------------------------------------------------------------------------- */
+
+.screen-enter {
+  animation: motion-screen-in var(--motion-page) backwards
+    var(--motion-ease-out);
+}
+
+.screen-enter.motion-forward {
+  animation-name: motion-screen-forward;
+}
+
+.screen-enter.motion-back {
+  animation-name: motion-screen-back;
+}
+
+.screen-enter.motion-still {
+  animation: none;
+}
+
+/* Home entrance: the question arrives first, then the four choices. */
+.home-screen.screen-enter .app-header,
+.home-screen.screen-enter .home-intro,
+.home-screen.screen-enter .recent-link,
+.home-screen.screen-enter .local-note {
+  animation: motion-gentle-rise 520ms backwards var(--motion-ease-settle);
+}
+
+.home-screen.screen-enter .app-header {
+  animation-delay: 40ms;
+}
+
+.home-screen.screen-enter .home-intro {
+  animation-delay: 95ms;
+}
+
+.home-screen.screen-enter .recent-link {
+  animation-delay: 360ms;
+}
+
+.home-screen.screen-enter .local-note {
+  animation-delay: 430ms;
+}
+
+.home-screen.screen-enter .state-card {
+  --card-enter-x: -0.65rem;
+  --card-enter-tilt: -0.55deg;
+  animation: motion-card-drift-in 650ms backwards var(--motion-ease-settle);
+  animation-delay: calc(145ms + var(--motion-delay));
+}
+
+.home-screen.screen-enter .state-card:nth-child(even) {
+  --card-enter-x: 0.65rem;
+  --card-enter-tilt: 0.55deg;
+}
+
+/* Branch screen: response leads, controls follow without rushing the user. */
+.branch-screen.screen-enter .detail-glyph,
+.branch-screen.screen-enter .branch-heading > p,
+.branch-screen.screen-enter .branch-heading > h2,
+.branch-screen.screen-enter .response-paper,
+.branch-screen.screen-enter .section-label,
+.branch-screen.screen-enter .choice-row,
+.branch-screen.screen-enter .quiet-action {
+  animation: motion-content-reveal var(--motion-reveal) backwards
+    var(--motion-ease-settle);
+}
+
+.branch-screen.screen-enter .detail-glyph {
+  animation-delay: 70ms;
+}
+
+.branch-screen.screen-enter .branch-heading > p {
+  animation-delay: 110ms;
+}
+
+.branch-screen.screen-enter .branch-heading > h2 {
+  animation-delay: 145ms;
+}
+
+.branch-screen.screen-enter .response-paper {
+  animation-delay: 195ms;
+}
+
+.branch-screen.screen-enter .section-label {
+  animation-delay: 260ms;
+}
+
+.branch-screen.screen-enter .choice-row:nth-child(1) {
+  animation-delay: 300ms;
+}
+
+.branch-screen.screen-enter .choice-row:nth-child(2) {
+  animation-delay: 340ms;
+}
+
+.branch-screen.screen-enter .choice-row:nth-child(3) {
+  animation-delay: 380ms;
+}
+
+.branch-screen.screen-enter .choice-row:nth-child(4) {
+  animation-delay: 420ms;
+}
+
+.branch-screen.screen-enter .choice-row:nth-child(5) {
+  animation-delay: 460ms;
+}
+
+.branch-screen.screen-enter .choice-row:nth-child(6) {
+  animation-delay: 500ms;
+}
+
+.branch-screen.screen-enter .quiet-action {
+  animation-delay: 530ms;
+}
+
+/* Reply screen: one calm settle, then the memory choices. */
+.reply-screen.screen-enter .reply-orbit {
+  animation: motion-orbit-settle 760ms 80ms backwards
+    var(--motion-ease-settle);
+}
+
+.reply-screen.screen-enter > .soft-kicker,
+.reply-screen.screen-enter > h2,
+.reply-screen.screen-enter .final-reply,
+.reply-screen.screen-enter .memory-action-card,
+.reply-screen.screen-enter .memory-actions > .quiet-action {
+  animation: motion-content-reveal var(--motion-reveal) backwards
+    var(--motion-ease-settle);
+}
+
+.reply-screen.screen-enter > .soft-kicker {
+  animation-delay: 150ms;
+}
+
+.reply-screen.screen-enter > h2 {
+  animation-delay: 190ms;
+}
+
+.reply-screen.screen-enter .final-reply {
+  animation-delay: 245ms;
+}
+
+.reply-screen.screen-enter .memory-action-card:nth-child(1) {
+  animation-delay: 340ms;
+}
+
+.reply-screen.screen-enter .memory-action-card:nth-child(2) {
+  animation-delay: 390ms;
+}
+
+.reply-screen.screen-enter .memory-actions > .quiet-action {
+  animation-delay: 440ms;
+}
+
+/* Writing feels like a sheet gently surfacing, not a modal striking the page. */
+.writing-screen.screen-enter .writing-context {
+  animation: motion-content-reveal 500ms 70ms backwards
+    var(--motion-ease-settle);
+}
+
+.writing-screen.screen-enter .writing-sheet {
+  animation: motion-sheet-rise var(--motion-sheet) 90ms backwards
+    var(--motion-ease-settle);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Soft response glow                                                          */
+/* -------------------------------------------------------------------------- */
+
+.response-paper,
+.final-reply {
+  isolation: isolate;
+  overflow: hidden;
+  position: relative;
+}
+
+.response-paper::after,
+.final-reply::after {
+  animation: motion-paper-bloom 3.1s 260ms both var(--motion-ease-breathe);
+  background: radial-gradient(circle, var(--tone-glow), transparent 69%);
+  border-radius: 50%;
+  content: "";
+  filter: blur(15px);
+  height: 10rem;
+  pointer-events: none;
+  position: absolute;
+  right: -4.5rem;
+  top: -5rem;
+  transform-origin: 50% 50%;
+  width: 10rem;
+  z-index: 0;
+}
+
+.response-paper > *,
+.final-reply > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Saved state ripple                                                          */
+/* -------------------------------------------------------------------------- */
+
+.saved-screen.screen-enter .saved-orbit {
+  animation: motion-saved-settle 820ms 60ms backwards
+    var(--motion-ease-settle);
+}
+
+.saved-orbit::before {
+  animation: motion-saved-ripple 1.35s 160ms both var(--motion-ease-out);
+  border: 1px solid color-mix(in srgb, var(--tone-accent) 34%, transparent);
+  border-radius: 50%;
+  content: "";
+  inset: -0.3rem;
+  pointer-events: none;
+  position: absolute;
+}
+
+.saved-orbit::after {
+  animation: motion-status-dot 680ms 340ms backwards
+    var(--motion-ease-settle);
+}
+
+.saved-screen.screen-enter > .soft-kicker,
+.saved-screen.screen-enter > h2,
+.saved-screen.screen-enter .saved-copy,
+.saved-screen.screen-enter .saved-local,
+.saved-screen.screen-enter .saved-actions {
+  animation: motion-content-reveal var(--motion-reveal) backwards
+    var(--motion-ease-settle);
+}
+
+.saved-screen.screen-enter > .soft-kicker {
+  animation-delay: 170ms;
+}
+
+.saved-screen.screen-enter > h2 {
+  animation-delay: 220ms;
+}
+
+.saved-screen.screen-enter .saved-copy {
+  animation-delay: 270ms;
+}
+
+.saved-screen.screen-enter .saved-local {
+  animation-delay: 315ms;
+}
+
+.saved-screen.screen-enter .saved-actions {
+  animation-delay: 410ms;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Timeline and data views                                                     */
+/* -------------------------------------------------------------------------- */
+
+.timeline-screen.screen-enter .section-header,
+.timeline-screen.screen-enter .section-intro,
+.timeline-screen.screen-enter .calm-notice,
+.timeline-screen.screen-enter .empty-memory,
+.timeline-screen.screen-enter .memory-group > h3,
+.timeline-screen.screen-enter .memory-card,
+.data-screen.screen-enter .calm-backbar,
+.data-screen.screen-enter .data-heading,
+.data-screen.screen-enter .data-card,
+.data-screen.screen-enter .calm-notice {
+  animation: motion-timeline-item 560ms backwards var(--motion-ease-settle);
+}
+
+.timeline-screen.screen-enter .section-header,
+.data-screen.screen-enter .calm-backbar {
+  animation-delay: 60ms;
+}
+
+.timeline-screen.screen-enter .section-intro,
+.data-screen.screen-enter .data-heading {
+  animation-delay: 115ms;
+}
+
+.timeline-screen.screen-enter .calm-notice,
+.data-screen.screen-enter .calm-notice {
+  animation-delay: 150ms;
+}
+
+.timeline-screen.screen-enter .empty-memory {
+  animation-delay: 185ms;
+}
+
+.memory-group {
+  --motion-group-delay: 0ms;
+}
+
+.memory-group:nth-child(2) {
+  --motion-group-delay: 70ms;
+}
+
+.memory-group:nth-child(3) {
+  --motion-group-delay: 140ms;
+}
+
+.memory-group:nth-child(4) {
+  --motion-group-delay: 210ms;
+}
+
+.memory-group:nth-child(n + 5) {
+  --motion-group-delay: 250ms;
+}
+
+.timeline-screen.screen-enter .memory-group > h3 {
+  animation-delay: calc(145ms + var(--motion-group-delay));
+}
+
+.memory-card:nth-child(1) {
+  --motion-item-delay: 0ms;
+}
+
+.memory-card:nth-child(2) {
+  --motion-item-delay: 48ms;
+}
+
+.memory-card:nth-child(3) {
+  --motion-item-delay: 96ms;
+}
+
+.memory-card:nth-child(4) {
+  --motion-item-delay: 144ms;
+}
+
+.memory-card:nth-child(n + 5) {
+  --motion-item-delay: 180ms;
+}
+
+.timeline-screen.screen-enter .memory-card {
+  animation-delay: calc(
+    180ms + var(--motion-group-delay, 0ms) + var(--motion-item-delay, 0ms)
+  );
+}
+
+.timeline-screen.screen-enter .memory-dot {
+  animation: motion-memory-dot 620ms backwards var(--motion-ease-settle);
+  animation-delay: calc(
+    330ms + var(--motion-group-delay, 0ms) + var(--motion-item-delay, 0ms)
+  );
+}
+
+.data-screen.screen-enter .data-card:nth-of-type(1) {
+  animation-delay: 180ms;
+}
+
+.data-screen.screen-enter .data-card:nth-of-type(2) {
+  animation-delay: 235ms;
+}
+
+.data-screen.screen-enter .data-card:nth-of-type(3) {
+  animation-delay: 290ms;
+}
+
+/* Semantic view hooks stay explicit so each product moment has its own pace. */
+.motion-branch {
+  animation: motion-branch-arrive 540ms backwards var(--motion-ease-settle);
+}
+
+.motion-reply {
+  animation: motion-reply-arrive 620ms backwards var(--motion-ease-settle);
+}
+
+.motion-saved {
+  animation: motion-saved-arrive 720ms backwards var(--motion-ease-settle);
+}
+
+.motion-timeline {
+  animation: motion-timeline-arrive 560ms backwards var(--motion-ease-settle);
+}
+
+.motion-write,
+.motion-detail,
+.motion-data {
+  animation: motion-screen-in var(--motion-page) backwards var(--motion-ease-out);
+}
+
+.motion-choice {
+  animation: motion-content-reveal 520ms backwards var(--motion-ease-settle);
+  animation-delay: var(--motion-delay);
+}
+
+.motion-memory-card {
+  animation: motion-timeline-item 560ms backwards var(--motion-ease-settle);
+  animation-delay: var(--motion-delay);
+}
+
+.motion-rise,
+.motion-data-card,
+.motion-detail-blocks > section {
+  animation: motion-gentle-rise 540ms backwards var(--motion-ease-settle);
+}
+
+.motion-data-card:nth-of-type(2) { animation-delay: 70ms; }
+.motion-data-card:nth-of-type(3) { animation-delay: 140ms; }
+
+.motion-orbit::before {
+  animation: motion-ring-spin 16s linear infinite;
+  border: 1px dashed color-mix(in srgb, var(--tone-accent) 34%, transparent);
+  border-radius: 50%;
+  content: "";
+  inset: -0.55rem;
+  position: absolute;
+}
+
+.saved-ripple {
+  border: 1px solid color-mix(in srgb, var(--tone-accent) 38%, transparent);
+  border-radius: 50%;
+  inset: -0.2rem;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.saved-ripple-one {
+  animation: motion-saved-ripple 1.55s 160ms both var(--motion-ease-out);
+}
+
+.saved-ripple-two {
+  animation: motion-saved-ripple 1.85s 380ms both var(--motion-ease-out);
+}
+
+.motion-actions .memory-action-card {
+  backdrop-filter: blur(12px);
+}
+
+.motion-response {
+  backdrop-filter: blur(18px) saturate(1.02);
+  box-shadow:
+    0 1rem 3rem color-mix(in srgb, var(--tone-accent) 9%, transparent),
+    var(--shadow-keyline);
+}
+
+/* Sol tuning: make the moving room visible without sacrificing text calm. */
+.motion-surface {
+  backdrop-filter: blur(24px) saturate(1.08);
+  background: rgba(250, 248, 244, 0.62);
+}
+
+.motion-home {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.motion-home::before {
+  background: conic-gradient(
+    from 145deg,
+    rgba(229, 140, 84, 0.44),
+    rgba(92, 156, 190, 0.42),
+    rgba(137, 103, 181, 0.38),
+    rgba(86, 148, 105, 0.4),
+    rgba(229, 140, 84, 0.44)
+  );
+  filter: blur(38px) saturate(1.08);
+  opacity: 0.72;
+}
+
+.ambient-scene__orbit-line {
+  border-color: rgba(71, 99, 114, 0.16);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.34),
+    0 0 2.4rem rgba(255, 255, 255, 0.48);
+}
+
+.ambient-scene__orbit-line::after {
+  border: 1px solid rgba(120, 94, 148, 0.1);
+  border-radius: inherit;
+  content: "";
+  inset: 7%;
+  position: absolute;
+}
+
+.motion-hero {
+  isolation: isolate;
+  position: relative;
+}
+
+.motion-hero::before {
+  animation: motion-hero-halo 13s infinite alternate var(--motion-ease-breathe);
+  background: conic-gradient(
+    from 110deg,
+    rgba(237, 156, 104, 0.34),
+    rgba(108, 170, 199, 0.28),
+    rgba(151, 119, 192, 0.3),
+    rgba(237, 156, 104, 0.34)
+  );
+  border-radius: 50%;
+  content: "";
+  filter: blur(20px);
+  height: 8rem;
+  left: -2.5rem;
+  opacity: 0.72;
+  position: absolute;
+  top: -2.2rem;
+  width: 13rem;
+  z-index: -1;
+}
+
+.motion-state-card[data-tone="food"] { --tone-card-glass: rgba(241, 190, 154, 0.68); }
+.motion-state-card[data-tone="rest"] { --tone-card-glass: rgba(180, 216, 233, 0.68); }
+.motion-state-card[data-tone="tired"] { --tone-card-glass: rgba(185, 219, 188, 0.66); }
+.motion-state-card[data-tone="visit"] { --tone-card-glass: rgba(207, 190, 227, 0.68); }
+
+.motion-state-card {
+  background:
+    radial-gradient(circle at 92% 8%, var(--tone-glow), transparent 45%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.54), var(--tone-card-glass));
+  border-color: rgba(255, 255, 255, 0.84);
+}
+
+.motion-rise,
+.local-pill,
+.no-task-pill {
+  backdrop-filter: blur(12px) saturate(1.06);
+}
+
+/* The low-priority PWA update notice rises once and then stays still. */
+.pwa-update {
+  animation: motion-pwa-rise 480ms backwards var(--motion-ease-settle);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Touch rebound and hover restraint                                           */
+/* -------------------------------------------------------------------------- */
+
+.state-card,
+.choice-row,
+.memory-action-card,
+.recent-link,
+.memory-card,
+.primary-button,
+.secondary-button,
+.danger-button,
+.icon-button,
+.text-button,
+.back-button,
+.quiet-action,
+.pwa-update-actions button {
+  transform: translate3d(0, 0, 0);
+  transition:
+    transform var(--motion-press) var(--motion-ease-out),
+    opacity var(--motion-control) ease,
+    filter var(--motion-control) ease;
+}
+
+.state-card:active,
+.choice-row:active,
+.memory-action-card:active,
+.recent-link:active,
+.memory-card:active,
+.primary-button:active,
+.secondary-button:active,
+.danger-button:active,
+.icon-button:active,
+.text-button:active,
+.back-button:active,
+.quiet-action:active,
+.pwa-update-actions button:active {
+  filter: saturate(0.96);
+  transform: translate3d(0, 1px, 0) scale(0.976);
+  transition-duration: 75ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .state-card:hover,
+  .memory-card:hover,
+  .memory-action-card:hover,
+  .recent-link:hover {
+    filter: saturate(1.025);
+    transform: translate3d(0, -2px, 0);
+  }
+
+  .choice-row:hover,
+  .primary-button:hover,
+  .secondary-button:hover,
+  .icon-button:hover,
+  .text-button:hover {
+    filter: brightness(1.015);
+    transform: translate3d(0, -1px, 0);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Keyframes: only transform, opacity and filter change                        */
+/* -------------------------------------------------------------------------- */
+
+@keyframes motion-tide-left {
+  0% {
+    opacity: 0.58;
+    transform: translate3d(-0.3rem, -0.2rem, 0) scale(0.98) rotate(-2deg);
+  }
+  100% {
+    opacity: 0.88;
+    transform: translate3d(1.15rem, 0.85rem, 0) scale(1.06) rotate(4deg);
+  }
+}
+
+@keyframes motion-tide-right {
+  0% {
+    opacity: 0.48;
+    transform: translate3d(0.4rem, 0.2rem, 0) scale(1.03) rotate(2deg);
+  }
+  100% {
+    opacity: 0.78;
+    transform: translate3d(-1.2rem, -0.9rem, 0) scale(0.97) rotate(-3deg);
+  }
+}
+
+@keyframes motion-aurora-drift {
+  0% {
+    opacity: 0.42;
+    transform: translate3d(0, 0, 0) scale(0.96) rotate(-3deg);
+  }
+  100% {
+    opacity: 0.74;
+    transform: translate3d(-1.4rem, 1.2rem, 0) scale(1.08) rotate(4deg);
+  }
+}
+
+@keyframes motion-light-breathe {
+  0% {
+    opacity: 0.22;
+    transform: translate3d(0, 0, 0) scale(0.94);
+  }
+  100% {
+    opacity: 0.42;
+    transform: translate3d(1rem, -0.8rem, 0) scale(1.07);
+  }
+}
+
+@keyframes motion-screen-in {
+  from {
+    filter: blur(2.5px);
+    opacity: 0;
+    transform: translate3d(0, 0.65rem, 0) scale(0.995);
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes motion-screen-forward {
+  from {
+    filter: blur(2px);
+    opacity: 0;
+    transform: translate3d(0.8rem, 0.25rem, 0) scale(0.995);
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes motion-screen-back {
+  from {
+    filter: blur(1.5px);
+    opacity: 0;
+    transform: translate3d(-0.55rem, 0.15rem, 0) scale(0.997);
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes motion-gentle-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.55rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes motion-card-drift-in {
+  from {
+    filter: saturate(0.9);
+    opacity: 0;
+    transform: translate3d(var(--card-enter-x), 0.9rem, 0)
+      rotate(var(--card-enter-tilt)) scale(0.965);
+  }
+  68% {
+    filter: saturate(1.02);
+    opacity: 1;
+    transform: translate3d(0, -0.1rem, 0) rotate(0) scale(1.008);
+  }
+  to {
+    filter: saturate(1);
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0) scale(1);
+  }
+}
+
+@keyframes motion-content-reveal {
+  from {
+    filter: blur(1.5px);
+    opacity: 0;
+    transform: translate3d(0, 0.55rem, 0) scale(0.992);
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes motion-orbit-settle {
+  from {
+    filter: blur(2px);
+    opacity: 0;
+    transform: translate3d(0, 0.65rem, 0) scale(0.78) rotate(-7deg);
+  }
+  72% {
+    filter: blur(0);
+    opacity: 1;
+    transform: translate3d(0, -0.08rem, 0) scale(1.035) rotate(1deg);
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1) rotate(0);
+  }
+}
+
+@keyframes motion-sheet-rise {
+  from {
+    filter: blur(2px);
+    opacity: 0;
+    transform: translate3d(0, 1.5rem, 0) scale(0.995);
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes motion-paper-bloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.72) translate3d(0.7rem, -0.5rem, 0);
+  }
+  38% {
+    opacity: 0.56;
+    transform: scale(1.12) translate3d(-0.15rem, 0.2rem, 0);
+  }
+  100% {
+    opacity: 0.16;
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+}
+
+@keyframes motion-saved-settle {
+  from {
+    filter: blur(2px);
+    opacity: 0;
+    transform: translate3d(0, 0.55rem, 0) scale(0.7) rotate(-5deg);
+  }
+  70% {
+    filter: blur(0);
+    opacity: 1;
+    transform: translate3d(0, -0.08rem, 0) scale(1.04) rotate(1deg);
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1) rotate(0);
+  }
+}
+
+@keyframes motion-saved-ripple {
+  0% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+  24% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.92);
+  }
+}
+
+@keyframes motion-status-dot {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  68% {
+    opacity: 1;
+    transform: scale(1.18);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes motion-timeline-item {
+  from {
+    filter: blur(1.5px);
+    opacity: 0;
+    transform: translate3d(0, 0.7rem, 0) scale(0.992);
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes motion-memory-dot {
+  from {
+    opacity: 0;
+    transform: scale(0.25);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.22);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes motion-pwa-rise {
+  from {
+    filter: blur(2px);
+    opacity: 0;
+    transform: translate3d(-50%, 0.85rem, 0) scale(0.985);
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translate3d(-50%, 0, 0) scale(1);
+  }
+}
+
+@keyframes ambient-aurora-one {
+  from { transform: translate3d(-3%, -2%, 0) scale(0.92) rotate(-5deg); }
+  to { transform: translate3d(18%, 16%, 0) scale(1.12) rotate(5deg); }
+}
+
+@keyframes ambient-aurora-two {
+  from { transform: translate3d(5%, -8%, 0) scale(1.04) rotate(3deg); }
+  to { transform: translate3d(-20%, 12%, 0) scale(0.92) rotate(-7deg); }
+}
+
+@keyframes ambient-aurora-three {
+  from { transform: translate3d(-4%, 7%, 0) scale(0.95) rotate(-4deg); }
+  to { transform: translate3d(17%, -15%, 0) scale(1.1) rotate(6deg); }
+}
+
+@keyframes ambient-aurora-four {
+  from { transform: translate3d(8%, 6%, 0) scale(1.08) rotate(4deg); }
+  to { transform: translate3d(-18%, -14%, 0) scale(0.94) rotate(-6deg); }
+}
+
+@keyframes ambient-haze-breathe {
+  from { opacity: 0.22; transform: scale(0.88); }
+  to { opacity: 0.48; transform: scale(1.06); }
+}
+
+@keyframes ambient-orbit-spin {
+  from { transform: translate3d(-50%, -50%, 0) rotate(-14deg); }
+  to { transform: translate3d(-50%, -50%, 0) rotate(346deg); }
+}
+
+@keyframes ambient-orbit-spin-reverse {
+  from { transform: translate3d(-50%, -50%, 0) rotate(18deg); }
+  to { transform: translate3d(-50%, -50%, 0) rotate(-342deg); }
+}
+
+@keyframes ambient-mote-float {
+  from { opacity: 0.2; transform: translate3d(0, 0.3rem, 0) scale(0.82); }
+  to { opacity: 0.78; transform: translate3d(0.55rem, -0.8rem, 0) scale(1.16); }
+}
+
+@keyframes ambient-signal-breathe {
+  from { opacity: 0.35; transform: translate3d(0, 0.15rem, 0) scale(0.98); }
+  to { opacity: 0.65; transform: translate3d(0, -0.15rem, 0) scale(1.02); }
+}
+
+@keyframes motion-branch-arrive {
+  from { filter: blur(3px); opacity: 0; transform: translate3d(0.7rem, 0.45rem, 0) scale(0.985); }
+  to { filter: blur(0); opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes motion-reply-arrive {
+  from { filter: blur(3px); opacity: 0; transform: translate3d(0, 0.75rem, 0) scale(0.97); }
+  to { filter: blur(0); opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes motion-saved-arrive {
+  from { filter: blur(4px); opacity: 0; transform: translate3d(0, 0.4rem, 0) scale(0.94); }
+  72% { filter: blur(0); opacity: 1; transform: translate3d(0, -0.08rem, 0) scale(1.008); }
+  to { filter: blur(0); opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes motion-timeline-arrive {
+  from { filter: blur(2px); opacity: 0; transform: translate3d(-0.4rem, 0.45rem, 0) scale(0.992); }
+  to { filter: blur(0); opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes motion-sparkle-float {
+  0%, 100% { opacity: 0.7; transform: translate3d(0, 0, 0) rotate(-8deg) scale(0.92); }
+  50% { opacity: 1; transform: translate3d(0, -0.18rem, 0) rotate(10deg) scale(1.1); }
+}
+
+@keyframes motion-card-sheen {
+  0%, 22% { opacity: 0; transform: translate3d(-34%, 0, 0) rotate(9deg); }
+  44% { opacity: 0.7; }
+  66%, 100% { opacity: 0; transform: translate3d(34%, 0, 0) rotate(9deg); }
+}
+
+@keyframes motion-glyph-breathe {
+  from { filter: saturate(0.94); transform: translate3d(0, 0.08rem, 0) scale(0.98); }
+  to { filter: saturate(1.08); transform: translate3d(0, -0.12rem, 0) scale(1.035); }
+}
+
+@keyframes motion-brand-settle {
+  from { transform: translate3d(0, 0.05rem, 0) rotate(-5deg) scale(0.985); }
+  to { transform: translate3d(0, -0.06rem, 0) rotate(-2deg) scale(1.025); }
+}
+
+@keyframes motion-ring-spin {
+  from { opacity: 0.42; transform: rotate(0deg) scale(0.98); }
+  50% { opacity: 0.72; }
+  to { opacity: 0.42; transform: rotate(360deg) scale(0.98); }
+}
+
+@keyframes motion-hero-halo {
+  from { opacity: 0.52; transform: translate3d(-0.4rem, 0.1rem, 0) rotate(-7deg) scale(0.94); }
+  to { opacity: 0.82; transform: translate3d(1.4rem, 0.45rem, 0) rotate(7deg) scale(1.08); }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Mobile cost controls                                                        */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 520px) {
+  .motion-stage {
+    background: linear-gradient(155deg, #f3e8df, #e1ecec 48%, #ece4f2);
+  }
+
+  .motion-surface {
+    backdrop-filter: blur(20px) saturate(1.03);
+    background: rgba(250, 248, 244, 0.54);
+  }
+
+  .ambient-scene__aurora {
+    filter: blur(52px) saturate(1.06);
+    height: 32rem;
+    width: 32rem;
+  }
+
+  .ambient-scene__orbit {
+    opacity: 0.58;
+  }
+
+  .ambient-scene__mote:nth-child(n + 4),
+  .ambient-scene__signal {
+    display: none;
+  }
+
+  .screen::before {
+    filter: blur(28px) saturate(0.92);
+    height: 21rem;
+    right: -8rem;
+    top: -8rem;
+    width: 21rem;
+  }
+
+  .home-screen::before {
+    filter: blur(36px) saturate(0.86);
+    top: 7rem;
+  }
+
+  .screen::after {
+    filter: blur(20px);
+    height: 18rem;
+    width: 18rem;
+  }
+}
+
+@media (update: slow), (prefers-reduced-data: reduce) {
+  .soft-tide,
+  .ambient-scene *,
+  .screen::before,
+  .screen::after {
+    animation: none;
+    will-change: auto;
+  }
+
+  .screen::before {
+    opacity: 0.42;
+    transform: none;
+  }
+
+  .screen::after {
+    opacity: 0.25;
+    transform: none;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Reduced motion: preserve atmosphere, remove all movement                    */
+/* -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .soft-tide,
+  .ambient-scene,
+  .ambient-scene *,
+  .screen,
+  .screen::before,
+  .screen::after,
+  .screen *,
+  .screen *::before,
+  .screen *::after,
+  .pwa-update,
+  .pwa-update * {
+    animation: none !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .ambient-scene__aurora {
+    opacity: 0.2;
+    transform: none;
+    will-change: auto;
+  }
+
+  .ambient-scene__orbit,
+  .ambient-scene__mote,
+  .ambient-scene__signal,
+  .motion-state-card::before,
+  .motion-orbit::before,
+  .saved-ripple {
+    animation: none !important;
+    transform: none;
+  }
+
+  .motion-state-card::before,
+  .saved-ripple {
+    opacity: 0;
+  }
+
+  .screen::before {
+    filter: blur(28px) saturate(0.9);
+    opacity: 0.36;
+    transform: none;
+  }
+
+  .screen::after {
+    filter: blur(20px);
+    opacity: 0.2;
+    transform: none;
+  }
+
+  .response-paper::after,
+  .final-reply::after,
+  .saved-orbit::before {
+    opacity: 0.1;
+    transform: none;
+  }
+
+  .state-card:active,
+  .choice-row:active,
+  .memory-action-card:active,
+  .recent-link:active,
+  .memory-card:active,
+  .primary-button:active,
+  .secondary-button:active,
+  .danger-button:active,
+  .icon-button:active,
+  .text-button:active,
+  .back-button:active,
+  .quiet-action:active,
+  .pwa-update-actions button:active {
+    filter: none;
+    transform: none;
+  }
+}

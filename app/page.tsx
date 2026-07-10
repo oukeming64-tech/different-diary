@@ -23,6 +23,11 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  AmbientScene,
+  type AmbientSceneTone,
+} from "./ambient-scene";
+
+import {
   clearAllLocalDataAndRecreateIdentity,
   createLocalExportJson,
   deleteCheckIn,
@@ -89,7 +94,7 @@ const branches: Branch[] = [
     label: "我今天不想练",
     shortLabel: "今天不想练",
     memoryLabel: "那天选择休息",
-    hint: "休息不是一次失败",
+    hint: "今天可以只休息",
     eyebrow: "今天已经消耗了不少力气",
     response:
       "不想练也可以。上班、通勤和处理生活，本来就在消耗你。",
@@ -395,14 +400,26 @@ export default function Home() {
   }
 
   const tone = activeBranchId ?? selectedRecord?.state ?? "visit";
+  const ambientTone: AmbientSceneTone =
+    view === "home"
+      ? "home"
+      : view === "timeline" || view === "detail" || view === "data"
+        ? "memory"
+        : tone === "visit"
+          ? "sit"
+          : tone;
 
   return (
-    <main className="stage-shell">
-      <div className="soft-tide soft-tide-one" aria-hidden="true" />
-      <div className="soft-tide soft-tide-two" aria-hidden="true" />
-      <section className="app-surface" data-tone={tone} aria-live="polite">
+    <main className={`stage-shell motion-stage motion-stage--${view}`}>
+      <AmbientScene tone={ambientTone} />
+      <section
+        className="app-surface motion-surface"
+        data-tone={tone}
+        data-view={view}
+        aria-live="polite"
+      >
         {view === "home" && (
-          <div className="screen home-screen screen-enter">
+          <div className="screen home-screen screen-enter motion-home">
             <header className="app-header">
               <div className="brand" aria-label="减肥拍拍乐">
                 <span className="brand-orbit" aria-hidden="true">
@@ -416,7 +433,7 @@ export default function Home() {
               </span>
             </header>
 
-            <div className="home-intro">
+            <div className="home-intro motion-hero">
               <p className="soft-kicker">
                 <Sparkles size={14} aria-hidden="true" />
                 嗨，先不用交作业
@@ -437,12 +454,12 @@ export default function Home() {
             <div className="state-grid" aria-label="四个核心入口">
               {branches.map((branch, index) => (
                 <button
-                  className="state-card"
+                  className="state-card motion-state-card"
                   data-tone={branch.id}
                   data-testid={`branch-${branch.id}`}
                   key={branch.id}
                   onClick={() => openBranch(branch.id)}
-                  style={{ "--delay": `${index * 45}ms` } as React.CSSProperties}
+                  style={{ "--motion-delay": `${index * 90}ms` } as React.CSSProperties}
                   type="button"
                 >
                   <span className="state-card-top">
@@ -459,7 +476,7 @@ export default function Home() {
               ))}
             </div>
 
-            <button className="recent-link" onClick={openTimeline} type="button">
+            <button className="recent-link motion-rise" onClick={openTimeline} type="button">
               <span className="recent-link-icon" aria-hidden="true">
                 <History size={18} />
               </span>
@@ -478,27 +495,28 @@ export default function Home() {
         )}
 
         {view === "branch" && activeBranch && (
-          <div className="screen branch-screen screen-enter">
+          <div className="screen branch-screen screen-enter motion-branch">
             <CalmBack label="回到四个入口" onClick={goHome} />
-            <div className="branch-heading">
+            <div className="branch-heading motion-heading">
               <span className="detail-glyph" aria-hidden="true">
                 {activeBranch.icon}
               </span>
               <p>{activeBranch.eyebrow}</p>
               <h2>{activeBranch.shortLabel}</h2>
             </div>
-            <div className="response-paper">
+            <div className="response-paper motion-response">
               <span>先听我说</span>
               <p>{activeBranch.response}</p>
             </div>
             <div className="choice-section">
               <p className="section-label">现在更希望我怎么陪你？</p>
               <div className="choice-list">
-                {activeBranch.options.map((option) => (
+                {activeBranch.options.map((option, index) => (
                   <button
-                    className="choice-row"
+                    className="choice-row motion-choice"
                     key={option.id}
                     onClick={() => chooseIntent(option.id)}
+                    style={{ "--motion-delay": `${180 + index * 55}ms` } as React.CSSProperties}
                     type="button"
                   >
                     <span>{option.label}</span>
@@ -514,14 +532,14 @@ export default function Home() {
         )}
 
         {view === "reply" && activeBranch && currentResponse && (
-          <div className="screen reply-screen screen-enter">
+          <div className="screen reply-screen screen-enter motion-reply">
             <CalmBack label="换一个选择" onClick={() => setView("branch")} />
-            <div className="reply-orbit" aria-hidden="true">
+            <div className="reply-orbit motion-orbit" aria-hidden="true">
               <span>{activeBranch.icon}</span>
             </div>
             <p className="soft-kicker centered">好，就按你说的来</p>
             <h2>{intentLabel(activeBranch.id, selectedIntentId ?? "")}</h2>
-            <div className="final-reply">
+            <div className="final-reply motion-response">
               <p>{currentResponse.text}</p>
             </div>
 
@@ -531,7 +549,7 @@ export default function Home() {
               </div>
             )}
 
-            <div className="memory-actions">
+            <div className="memory-actions motion-actions">
               <button
                 className="memory-action-card"
                 disabled={isSaving}
@@ -559,12 +577,12 @@ export default function Home() {
         )}
 
         {view === "write" && activeBranch && currentResponse && (
-          <div className="screen writing-screen screen-enter">
+          <div className="screen writing-screen screen-enter motion-write">
             <div className="writing-context" aria-hidden="true">
               <span>{activeBranch.icon}</span>
               <p>{currentResponse.text}</p>
             </div>
-            <section className="writing-sheet" aria-labelledby="writing-title">
+            <section className="writing-sheet motion-sheet" aria-labelledby="writing-title">
               <div className="sheet-handle" aria-hidden="true" />
               <header className="sheet-header">
                 <div>
@@ -621,8 +639,10 @@ export default function Home() {
         )}
 
         {view === "saved" && activeBranch && lastSavedRecord && (
-          <div className="screen saved-screen screen-enter">
-            <div className="saved-orbit" aria-hidden="true">
+          <div className="screen saved-screen screen-enter motion-saved">
+            <div className="saved-orbit motion-success" aria-hidden="true">
+              <i className="saved-ripple saved-ripple-one" />
+              <i className="saved-ripple saved-ripple-two" />
               <span>{activeBranch.icon}</span>
             </div>
             <p className="soft-kicker centered">已经轻轻放好了</p>
@@ -644,7 +664,7 @@ export default function Home() {
         )}
 
         {view === "timeline" && (
-          <div className="screen timeline-screen screen-enter">
+          <div className="screen timeline-screen screen-enter motion-timeline">
             <header className="section-header">
               <button className="icon-button" aria-label="回到首页" onClick={goHome} type="button">
                 <ArrowLeft size={20} />
@@ -676,14 +696,15 @@ export default function Home() {
                   <section className="memory-group" key={group.key}>
                     <h3>{group.label}</h3>
                     <div className="memory-stack">
-                      {group.records.map((record) => {
+                      {group.records.map((record, recordIndex) => {
                         const branch = branchFor(record.state);
                         return (
                           <button
-                            className="memory-card"
+                            className="memory-card motion-memory-card"
                             data-tone={record.state}
                             key={record.id}
                             onClick={() => openRecord(record.id)}
+                            style={{ "--motion-delay": `${recordIndex * 70}ms` } as React.CSSProperties}
                             type="button"
                           >
                             <span className="memory-dot" aria-hidden="true" />
@@ -711,7 +732,7 @@ export default function Home() {
         )}
 
         {view === "detail" && selectedRecord && (
-          <div className="screen detail-screen screen-enter" data-tone={selectedRecord.state}>
+          <div className="screen detail-screen screen-enter motion-detail" data-tone={selectedRecord.state}>
             <CalmBack label="回到最近" onClick={openTimeline} />
             <div className="detail-heading">
               <span className="detail-glyph" aria-hidden="true">
@@ -720,7 +741,7 @@ export default function Home() {
               <p>{fullDateLabel(selectedRecord.occurredAt)}</p>
               <h2>{branchFor(selectedRecord.state)?.memoryLabel}</h2>
             </div>
-            <div className="detail-blocks">
+            <div className="detail-blocks motion-detail-blocks">
               {selectedRecord.userText && (
                 <section><span>你当时说</span><p>“{selectedRecord.userText}”</p></section>
               )}
@@ -748,18 +769,18 @@ export default function Home() {
         )}
 
         {view === "data" && (
-          <div className="screen data-screen screen-enter">
+          <div className="screen data-screen screen-enter motion-data">
             <CalmBack label="回到最近" onClick={openTimeline} />
             <div className="data-heading">
               <p className="soft-kicker"><ShieldCheck size={14} />控制权在你手里</p>
               <h2>本机数据</h2>
               <p>阶段 1 没有账户，也没有云端副本。</p>
             </div>
-            <section className="data-card local-data-card">
+            <section className="data-card local-data-card motion-data-card">
               <span className="data-card-icon"><Database size={20} /></span>
               <div><h3>只在当前设备</h3><p>身份和记录保存在浏览器的本机空间里。</p></div>
             </section>
-            <section className="data-card">
+            <section className="data-card motion-data-card">
               <span className="data-card-icon"><FileText size={20} /></span>
               <div><h3>导出一份副本</h3><p>生成 JSON 文件，不会删除或上传原记录。</p></div>
               <button className="secondary-button" disabled={isExporting} onClick={() => void exportData()} type="button">
@@ -767,7 +788,7 @@ export default function Home() {
               </button>
             </section>
             {dataNotice && <div className="calm-notice" role="status">{dataNotice}</div>}
-            <section className="data-card danger-card">
+            <section className="data-card danger-card motion-data-card">
               <span className="data-card-icon"><Trash2 size={20} /></span>
               <div><h3>清空这台设备</h3><p>会删除本机身份和全部记录，无法撤销。</p></div>
               {!confirmClear ? (
