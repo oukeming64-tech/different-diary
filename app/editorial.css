@@ -135,14 +135,6 @@ body {
   line-height: 1.14;
 }
 
-.soft-kicker-mark {
-  background: #8b7566;
-  border-radius: 999px;
-  display: inline-block;
-  height: 1px;
-  width: 1rem;
-}
-
 .state-index,
 .hairline-list,
 .memory-ledger {

@@ -31,14 +31,19 @@ test("server-renders the stage 1 local-first home", async () => {
   const html = await response.text();
   assert.match(html, /<html lang="zh-CN">/i);
   assert.match(html, /<title>减肥拍拍乐｜先接住你，再说别的<\/title>/i);
-  assert.match(html, /此刻，/);
-  assert.match(html, /你更像哪一句？/);
+  assert.match(html, /你这会儿，/);
+  assert.match(html, /想从哪儿说起？/);
   assert.match(html, /我想吃点东西/);
   assert.match(html, /我今天不想练/);
   assert.match(html, /我刚练完，很累/);
   assert.match(html, /没什么，只是来坐坐/);
-  assert.match(html, /看看最近发生了什么/);
-  assert.match(html, /记录只留在这台设备上/);
+  assert.match(html, /翻翻最近/);
+  assert.match(html, /只用本机/);
+  const body = html.slice(
+    html.indexOf("<body>"),
+    html.indexOf("</body>") + "</body>".length,
+  );
+  assert.doesNotMatch(body, /先不用交作业|你更像哪一句|像翻开几页/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/);
   assert.doesNotMatch(html, /阶段 0 原型|不会保存你的选择/);
 });

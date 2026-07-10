@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "zh_CN",
     title: "减肥拍拍乐｜先接住你，再说别的",
-    description: "此刻，你更像哪一句？一个只在本机的非审判陪伴工具。",
+    description: "你这会儿，想从哪儿说起？一个只用本机的生活陪伴工具。",
     images: [
       {
         url: "/og.png",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "减肥拍拍乐｜先接住你，再说别的",
-    description: "此刻，你更像哪一句？一个只在本机的非审判陪伴工具。",
+    description: "你这会儿，想从哪儿说起？一个只用本机的生活陪伴工具。",
     images: ["/og.png"],
   },
 };

@@ -575,21 +575,17 @@ export default function Home() {
               </div>
               <span className="local-pill">
                 <ShieldCheck size={13} aria-hidden="true" />
-                {storageReady ? "只在本机" : "本机模式"}
+                {storageReady ? "只在本机" : "只用本机"}
               </span>
             </header>
 
             <div className="home-intro motion-hero">
-              <p className="soft-kicker">
-                <span className="soft-kicker-mark" aria-hidden="true" />
-                嗨，先不用交作业
-              </p>
               <h1>
-                <span>此刻，</span>
+                <span>你这会儿，</span>
                 <br />
-                <span>你更像哪一句？</span>
+                <span>想从哪儿说起？</span>
               </h1>
-              <p>不用想得太准，点一句最接近的就好。</p>
+              <p>挑一句顺口的就行。</p>
             </div>
 
             {storageError && (
@@ -638,7 +634,7 @@ export default function Home() {
                 </span>
                 <span>
                   <strong>拍一张，先放在这里</strong>
-                  <small>可以只保存在本机，不识别，也不发送</small>
+                  <small>只记录时，只留本机，不识别，也不上传</small>
                 </span>
                 <ChevronRight size={18} aria-hidden="true" />
               </button>
@@ -648,17 +644,12 @@ export default function Home() {
                   <History size={18} />
                 </span>
                 <span>
-                  <strong>看看最近发生了什么</strong>
-                  <small>像翻开几页，不做统计</small>
+                  <strong>翻翻最近</strong>
+                  <small>按时间放着，不算分</small>
                 </span>
                 <ChevronRight size={18} aria-hidden="true" />
               </button>
             </nav>
-
-            <footer className="local-note">
-              <span aria-hidden="true" />
-              记录只留在这台设备上
-            </footer>
           </div>
         )}
 
