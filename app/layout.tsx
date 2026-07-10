@@ -1,16 +1,27 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { PwaRegister } from "./pwa-register";
 
 export const metadata: Metadata = {
   title: "减肥拍拍乐｜先接住你，再说别的",
   description:
-    "一个不催促、不打分的体重管理陪伴工具。阶段 0 手机端可点击原型。",
+    "一个不催促、不打分、可以离线使用的本机陪伴工具。",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/app-icon-192.png",
+    apple: "/app-icon-192.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "拍拍乐",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#f7f4ee",
+  themeColor: "#efede7",
 };
 
 export default function RootLayout({
@@ -20,7 +31,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
-      <body>{children}</body>
+      <body>
+        {children}
+        <PwaRegister />
+      </body>
     </html>
   );
 }

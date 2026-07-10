@@ -23,7 +23,7 @@ async function render() {
   );
 }
 
-test("server-renders the four phase 0 entry points", async () => {
+test("server-renders the stage 1 local-first home", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
@@ -36,22 +36,30 @@ test("server-renders the four phase 0 entry points", async () => {
   assert.match(html, /我今天不想练/);
   assert.match(html, /我刚练完，很累/);
   assert.match(html, /没什么，只是来坐坐/);
-  assert.match(html, /这版只演示交互，不登录，也不会保存你的选择/);
+  assert.match(html, /看看最近发生了什么/);
+  assert.match(html, /记录只留在这台设备上/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/);
+  assert.doesNotMatch(html, /阶段 0 原型|不会保存你的选择/);
 });
 
-test("keeps phase 0 free of persistence, auth and network calls", async () => {
-  const [page, hosting] = await Promise.all([
+test("keeps stage 1 device-local and free of server capabilities", async () => {
+  const [page, hosting, packageJson] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
+    readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /useState/);
   assert.match(page, /data-testid={`branch-\$\{branch\.id\}`}/);
+  assert.match(page, /ensureLocalIdentity/);
+  assert.match(page, /saveCheckIn/);
+  assert.match(page, /createLocalExportJson/);
   assert.doesNotMatch(
     page,
-    /fetch\(|axios|indexedDB|localStorage|sessionStorage|signIn|signOut|AIProvider/,
+    /fetch\(|axios|localStorage|sessionStorage|signIn|signOut|AIProvider|SyncAdapter/,
   );
+  assert.match(packageJson, /"dexie"/);
+  assert.doesNotMatch(packageJson, /drizzle|prisma|supabase|firebase/i);
   const hostingConfig = JSON.parse(hosting);
   assert.match(hostingConfig.project_id, /^appgprj_/);
   assert.equal(hostingConfig.d1, null);
