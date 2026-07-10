@@ -141,6 +141,8 @@ const branches: Branch[] = [
   },
 ];
 
+const stateOrdinals = ["一", "二", "三", "四"] as const;
+
 function branchFor(state: CheckInState | null | undefined) {
   return branches.find((branch) => branch.id === state);
 }
@@ -469,12 +471,9 @@ export default function Home() {
                     type="button"
                   >
                     <span className="state-index-number" aria-hidden="true">
-                      {String(index + 1).padStart(2, "0")}
+                      {stateOrdinals[index]}
                     </span>
                     <span className="state-card-top">
-                      <span className="state-glyph" aria-hidden="true">
-                        {branch.icon}
-                      </span>
                       <ArrowUpRight size={18} aria-hidden="true" />
                     </span>
                     <span className="state-card-copy">

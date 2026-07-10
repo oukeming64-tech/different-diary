@@ -91,7 +91,7 @@ test("loads the editorial override after the base and motion layers", async () =
   );
 });
 
-test("turns the four home choices into numbered editorial entries", async () => {
+test("turns the four home choices into ordered editorial entries", async () => {
   const page = await read("app/page.tsx");
 
   assert.ok(
@@ -109,9 +109,13 @@ test("turns the four home choices into numbered editorial entries", async () => 
     /String\(\s*index\s*\+\s*1\s*\)\.padStart\(\s*2\s*,\s*["']0["']\s*\)/.test(
       page,
     );
+  const hasWarmOrdinals =
+    /stateOrdinals\s*=\s*\[\s*["']一["']\s*,\s*["']二["']\s*,\s*["']三["']\s*,\s*["']四["']\s*\]/s.test(
+      page,
+    ) && /\{stateOrdinals\[index\]\}/.test(page);
   assert.ok(
-    hasLiteralNumbers || hasGeneratedNumbers,
-    "the four entries must visibly resolve to 01, 02, 03 and 04",
+    hasLiteralNumbers || hasGeneratedNumbers || hasWarmOrdinals,
+    "the four entries must visibly resolve to an intentional ordered sequence",
   );
 });
 
