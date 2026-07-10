@@ -1,7 +1,7 @@
 import { getStage1Database, type Stage1Database } from "./db";
 import {
   type LocalUserV1,
-  STAGE1_SCHEMA_VERSION,
+  CURRENT_LOCAL_SCHEMA_VERSION,
   toStage1StorageError,
 } from "./types";
 import { createStableUuid } from "./uuid";
@@ -10,7 +10,7 @@ function makeLocalIdentity(now: Date = new Date()): LocalUserV1 {
   return {
     id: createStableUuid(),
     createdAt: now.toISOString(),
-    schemaVersion: STAGE1_SCHEMA_VERSION,
+    schemaVersion: CURRENT_LOCAL_SCHEMA_VERSION,
   };
 }
 
@@ -47,9 +47,11 @@ export async function clearAllLocalDataAndRecreateIdentity(
   try {
     return await database.transaction(
       "rw",
+      database.attachments,
       database.checkIns,
       database.localUsers,
       async () => {
+        await database.attachments.clear();
         await database.checkIns.clear();
         await database.localUsers.clear();
 
@@ -65,4 +67,3 @@ export async function clearAllLocalDataAndRecreateIdentity(
     );
   }
 }
-

@@ -4,9 +4,16 @@ import {
   CHECK_IN_STATES,
   type CheckInV1,
   type CreateCheckInInput,
+  type CreateLocalImageAttachmentInput,
+  type CreatePhotoCheckInInput,
+  CURRENT_LOCAL_SCHEMA_VERSION,
+  LOCAL_IMAGE_MIME_TYPES,
+  type LocalImageAttachmentV1,
   type LocalUserV1,
+  type SavedPhotoCheckIn,
   Stage1StorageError,
   STAGE1_SCHEMA_VERSION,
+  STAGE2_SCHEMA_VERSION,
   toStage1StorageError,
 } from "./types";
 import { createStableUuid } from "./uuid";
@@ -19,6 +26,12 @@ const STAGE1_STORES = {
     "&id, localUserId, occurredAt, [localUserId+occurredAt], state, responseKey",
 } as const;
 
+const STAGE2_STORES = {
+  ...STAGE1_STORES,
+  attachments:
+    "&id, checkInId, localUserId, createdAt, [localUserId+createdAt]",
+} as const;
+
 export type CreateStage1DatabaseOptions = {
   name?: string;
   indexedDB?: DexieOptions["indexedDB"];
@@ -28,12 +41,22 @@ export type CreateStage1DatabaseOptions = {
 export class Stage1Database extends Dexie {
   readonly localUsers: Table<LocalUserV1, string>;
   readonly checkIns: Table<CheckInV1, string>;
+  readonly attachments: Table<LocalImageAttachmentV1, string>;
 
   constructor(name: string, options: DexieOptions) {
     super(name, options);
     this.version(STAGE1_SCHEMA_VERSION).stores(STAGE1_STORES);
+    this.version(STAGE2_SCHEMA_VERSION)
+      .stores(STAGE2_STORES)
+      .upgrade(async (transaction) => {
+        await transaction
+          .table<LocalUserV1>("local_users")
+          .toCollection()
+          .modify({ schemaVersion: CURRENT_LOCAL_SCHEMA_VERSION });
+      });
     this.localUsers = this.table<LocalUserV1, string>("local_users");
     this.checkIns = this.table<CheckInV1, string>("check_ins");
+    this.attachments = this.table<LocalImageAttachmentV1, string>("attachments");
   }
 }
 
@@ -90,7 +113,10 @@ export async function openStage1Database(
   }
 }
 
-function assertCreateCheckInInput(input: CreateCheckInInput): void {
+function assertCreateCheckInInput(
+  input: CreateCheckInInput,
+  operation = "saveCheckIn",
+): void {
   const requiredStrings = [
     input.localUserId,
     input.intentId,
@@ -106,19 +132,14 @@ function assertCreateCheckInInput(input: CreateCheckInInput): void {
   ) {
     throw new Stage1StorageError(
       "INVALID_INPUT",
-      "saveCheckIn",
+      operation,
       "记录内容缺少必要字段或时间格式无效。",
     );
   }
 }
 
-export async function saveCheckIn(
-  input: CreateCheckInInput,
-  database: Stage1Database = getStage1Database(),
-): Promise<CheckInV1> {
-  assertCreateCheckInInput(input);
-
-  const checkIn: CheckInV1 = {
+function makeCheckIn(input: CreateCheckInInput): CheckInV1 {
+  return {
     id: createStableUuid(),
     localUserId: input.localUserId,
     occurredAt: input.occurredAt ?? new Date().toISOString(),
@@ -129,6 +150,56 @@ export async function saveCheckIn(
     responseText: input.responseText,
     helpful: input.helpful ?? null,
   };
+}
+
+function isPositiveInteger(value: number): boolean {
+  return Number.isSafeInteger(value) && value > 0;
+}
+
+function assertProcessedImageInput(
+  image: CreateLocalImageAttachmentInput,
+): void {
+  if (
+    !(image.blob instanceof Blob) ||
+    !(image.thumbnailBlob instanceof Blob) ||
+    image.blob.size === 0 ||
+    image.thumbnailBlob.size === 0 ||
+    !LOCAL_IMAGE_MIME_TYPES.includes(image.mimeType) ||
+    !LOCAL_IMAGE_MIME_TYPES.includes(image.thumbnailMimeType) ||
+    !isPositiveInteger(image.width) ||
+    !isPositiveInteger(image.height) ||
+    !isPositiveInteger(image.thumbnailWidth) ||
+    !isPositiveInteger(image.thumbnailHeight)
+  ) {
+    throw new Stage1StorageError(
+      "INVALID_INPUT",
+      "savePhotoCheckIn",
+      "本机图片尚未完成有效的压缩处理。",
+    );
+  }
+}
+
+async function assertLocalUserExists(
+  localUserId: string,
+  database: Stage1Database,
+  operation: string,
+): Promise<void> {
+  const localUser = await database.localUsers.get(localUserId);
+  if (!localUser) {
+    throw new Stage1StorageError(
+      "INVALID_INPUT",
+      operation,
+      "找不到这条记录对应的本机身份。",
+    );
+  }
+}
+
+export async function saveCheckIn(
+  input: CreateCheckInInput,
+  database: Stage1Database = getStage1Database(),
+): Promise<CheckInV1> {
+  assertCreateCheckInInput(input);
+  const checkIn = makeCheckIn(input);
 
   try {
     return await database.transaction(
@@ -136,20 +207,66 @@ export async function saveCheckIn(
       database.localUsers,
       database.checkIns,
       async () => {
-        const localUser = await database.localUsers.get(input.localUserId);
-        if (!localUser) {
-          throw new Stage1StorageError(
-            "INVALID_INPUT",
-            "saveCheckIn",
-            "找不到这条记录对应的本机身份。",
-          );
-        }
+        await assertLocalUserExists(
+          input.localUserId,
+          database,
+          "saveCheckIn",
+        );
         await database.checkIns.add(checkIn);
         return checkIn;
       },
     );
   } catch (error) {
     throw toStage1StorageError("saveCheckIn", error);
+  }
+}
+
+export async function savePhotoCheckIn(
+  input: CreatePhotoCheckInInput,
+  database: Stage1Database = getStage1Database(),
+): Promise<SavedPhotoCheckIn> {
+  assertCreateCheckInInput(input, "savePhotoCheckIn");
+  assertProcessedImageInput(input.image);
+
+  const checkIn = makeCheckIn(input);
+  const attachment: LocalImageAttachmentV1 = {
+    id: createStableUuid(),
+    localUserId: checkIn.localUserId,
+    checkInId: checkIn.id,
+    createdAt: checkIn.occurredAt,
+    mediaType: "image",
+    mimeType: input.image.mimeType,
+    blob: input.image.blob,
+    byteSize: input.image.blob.size,
+    width: input.image.width,
+    height: input.image.height,
+    thumbnailBlob: input.image.thumbnailBlob,
+    thumbnailMimeType: input.image.thumbnailMimeType,
+    thumbnailByteSize: input.image.thumbnailBlob.size,
+    thumbnailWidth: input.image.thumbnailWidth,
+    thumbnailHeight: input.image.thumbnailHeight,
+    processingVersion: 1,
+  };
+
+  try {
+    return await database.transaction(
+      "rw",
+      database.localUsers,
+      database.checkIns,
+      database.attachments,
+      async () => {
+        await assertLocalUserExists(
+          input.localUserId,
+          database,
+          "savePhotoCheckIn",
+        );
+        await database.checkIns.add(checkIn);
+        await database.attachments.add(attachment);
+        return { checkIn, attachment };
+      },
+    );
+  } catch (error) {
+    throw toStage1StorageError("savePhotoCheckIn", error);
   }
 }
 
@@ -189,19 +306,80 @@ export async function getCheckInById(
   }
 }
 
+export async function listAttachments(
+  localUserId: string,
+  database: Stage1Database = getStage1Database(),
+): Promise<LocalImageAttachmentV1[]> {
+  try {
+    const attachments = await database.attachments
+      .where("[localUserId+createdAt]")
+      .between(
+        [localUserId, Dexie.minKey],
+        [localUserId, Dexie.maxKey],
+        true,
+        true,
+      )
+      .toArray();
+
+    return attachments.sort(
+      (left, right) =>
+        right.createdAt.localeCompare(left.createdAt) ||
+        right.id.localeCompare(left.id),
+    );
+  } catch (error) {
+    throw toStage1StorageError("listAttachments", error);
+  }
+}
+
+export async function listAttachmentsForCheckIn(
+  checkInId: string,
+  database: Stage1Database = getStage1Database(),
+): Promise<LocalImageAttachmentV1[]> {
+  try {
+    const attachments = await database.attachments
+      .where("checkInId")
+      .equals(checkInId)
+      .toArray();
+    return attachments.sort(
+      (left, right) =>
+        left.createdAt.localeCompare(right.createdAt) ||
+        left.id.localeCompare(right.id),
+    );
+  } catch (error) {
+    throw toStage1StorageError("listAttachmentsForCheckIn", error);
+  }
+}
+
+export async function getAttachmentById(
+  id: string,
+  database: Stage1Database = getStage1Database(),
+): Promise<LocalImageAttachmentV1 | undefined> {
+  try {
+    return await database.attachments.get(id);
+  } catch (error) {
+    throw toStage1StorageError("getAttachmentById", error);
+  }
+}
+
 export async function deleteCheckIn(
   id: string,
   database: Stage1Database = getStage1Database(),
 ): Promise<boolean> {
   try {
-    return await database.transaction("rw", database.checkIns, async () => {
-      const record = await database.checkIns.get(id);
-      if (!record) {
-        return false;
-      }
-      await database.checkIns.delete(id);
-      return true;
-    });
+    return await database.transaction(
+      "rw",
+      database.checkIns,
+      database.attachments,
+      async () => {
+        const record = await database.checkIns.get(id);
+        if (!record) {
+          return false;
+        }
+        await database.attachments.where("checkInId").equals(id).delete();
+        await database.checkIns.delete(id);
+        return true;
+      },
+    );
   } catch (error) {
     throw toStage1StorageError("deleteCheckIn", error);
   }
@@ -213,9 +391,11 @@ export async function clearStage1Data(
   try {
     await database.transaction(
       "rw",
+      database.attachments,
       database.checkIns,
       database.localUsers,
       async () => {
+        await database.attachments.clear();
         await database.checkIns.clear();
         await database.localUsers.clear();
       },

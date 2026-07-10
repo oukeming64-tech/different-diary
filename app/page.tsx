@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
+  Camera,
   Check,
   ChevronRight,
   Clock3,
@@ -26,25 +27,36 @@ import {
   AmbientScene,
   type AmbientSceneTone,
 } from "./ambient-scene";
+import { PhotoFlow } from "./photo-flow";
 
 import {
   clearAllLocalDataAndRecreateIdentity,
   createLocalExportJson,
+  createLocalExportJsonV2,
   deleteCheckIn,
   ensureLocalIdentity,
   isStage1StorageError,
+  listAttachments,
   listCheckIns,
   saveCheckIn,
   selectLocalResponse,
   type CheckInState,
   type CheckInV1,
+  type LocalImageAttachmentV1,
   type LocalResponse,
   type LocalUserV1,
 } from "../lib/stage1";
+import {
+  PhotoProcessingError,
+  processPhoto,
+  recordPhotoOnly,
+  type ProcessedPhoto,
+} from "../lib/stage2";
 
 type View =
   | "home"
   | "branch"
+  | "photo"
   | "reply"
   | "write"
   | "saved"
@@ -205,8 +217,18 @@ export default function Home() {
   const [draftText, setDraftText] = useState("");
   const [localUser, setLocalUser] = useState<LocalUserV1 | null>(null);
   const [records, setRecords] = useState<CheckInV1[]>([]);
+  const [attachments, setAttachments] = useState<LocalImageAttachmentV1[]>([]);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [lastSavedRecord, setLastSavedRecord] = useState<CheckInV1 | null>(null);
+  const [lastSavedAttachment, setLastSavedAttachment] =
+    useState<LocalImageAttachmentV1 | null>(null);
+  const [processedPhoto, setProcessedPhoto] = useState<ProcessedPhoto | null>(
+    null,
+  );
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoOrigin, setPhotoOrigin] = useState<"home" | "branch">("home");
+  const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -219,6 +241,13 @@ export default function Home() {
 
   const activeBranch = branchFor(activeBranchId);
   const selectedRecord = records.find((record) => record.id === selectedRecordId);
+  const attachmentsByCheckIn = useMemo(
+    () => new Map(attachments.map((attachment) => [attachment.checkInId, attachment])),
+    [attachments],
+  );
+  const selectedAttachment = selectedRecord
+    ? attachmentsByCheckIn.get(selectedRecord.id)
+    : undefined;
 
   const groupedRecords = useMemo(() => {
     const groups: Array<{ key: string; label: string; records: CheckInV1[] }> = [];
@@ -238,10 +267,14 @@ export default function Home() {
     async function prepareLocalSpace() {
       try {
         const identity = await ensureLocalIdentity();
-        const localRecords = await listCheckIns(identity.id);
+        const [localRecords, localAttachments] = await Promise.all([
+          listCheckIns(identity.id),
+          listAttachments(identity.id),
+        ]);
         if (!active) return;
         setLocalUser(identity);
         setRecords(localRecords);
+        setAttachments(localAttachments);
         setStorageReady(true);
         setStorageError(null);
       } catch (error) {
@@ -265,13 +298,29 @@ export default function Home() {
     if (surfaceRef.current) surfaceRef.current.scrollTop = 0;
   }, [view]);
 
+  useEffect(
+    () => () => {
+      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    },
+    [photoPreviewUrl],
+  );
+
+  function clearPhotoDraft() {
+    setProcessedPhoto(null);
+    setPhotoPreviewUrl(null);
+    setPhotoError(null);
+    setIsProcessingPhoto(false);
+  }
+
   function resetConversation() {
     setActiveBranchId(null);
     setSelectedIntentId(null);
     setCurrentResponse(null);
     setDraftText("");
     setLastSavedRecord(null);
+    setLastSavedAttachment(null);
     setStorageError(null);
+    clearPhotoDraft();
   }
 
   function goHome() {
@@ -280,6 +329,7 @@ export default function Home() {
   }
 
   function openBranch(id: CheckInState) {
+    clearPhotoDraft();
     setActiveBranchId(id);
     setSelectedIntentId(null);
     setCurrentResponse(null);
@@ -288,8 +338,30 @@ export default function Home() {
     setView("branch");
   }
 
+  function openPhotoFlow(origin: "home" | "branch") {
+    const branchId = activeBranchId ?? "food";
+    const intentId = "photo-no-calories";
+    const response = selectLocalResponse({
+      state: branchId,
+      intentId,
+      recentResponseKeys: records.map((record) => record.responseKey),
+    });
+    clearPhotoDraft();
+    setPhotoOrigin(origin);
+    setActiveBranchId(branchId);
+    setSelectedIntentId(intentId);
+    setCurrentResponse(response);
+    setDraftText("");
+    setStorageError(null);
+    setView("photo");
+  }
+
   function chooseIntent(intentId: string) {
     if (!activeBranchId) return;
+    if (activeBranchId === "food" && intentId === "photo-no-calories") {
+      openPhotoFlow("branch");
+      return;
+    }
     const response = selectLocalResponse({
       state: activeBranchId,
       intentId,
@@ -299,6 +371,30 @@ export default function Home() {
     setCurrentResponse(response);
     setStorageError(null);
     setView("reply");
+  }
+
+  async function preparePhoto(file: File) {
+    setIsProcessingPhoto(true);
+    setPhotoError(null);
+    try {
+      const photo = await processPhoto(file);
+      setProcessedPhoto(photo);
+      setPhotoPreviewUrl(URL.createObjectURL(photo.blob));
+    } catch (error) {
+      setPhotoError(
+        error instanceof PhotoProcessingError
+          ? error.message
+          : "这张图片暂时没能在本机整理好，因此没有保存，也没有发送。",
+      );
+    } finally {
+      setIsProcessingPhoto(false);
+    }
+  }
+
+  function closePhotoFlow() {
+    clearPhotoDraft();
+    if (photoOrigin === "branch") setView("branch");
+    else goHome();
   }
 
   async function ensureIdentityForSave() {
@@ -315,21 +411,45 @@ export default function Home() {
     setStorageError(null);
     try {
       const identity = await ensureIdentityForSave();
-      const record = await saveCheckIn({
-        localUserId: identity.id,
-        state: activeBranchId,
-        intentId: selectedIntentId,
-        userText: userText?.trim() || null,
-        responseKey: currentResponse.key,
-        responseText: currentResponse.text,
-      });
+      const savedPhoto = processedPhoto
+        ? await recordPhotoOnly({
+            image: processedPhoto,
+            localUserId: identity.id,
+            state: activeBranchId,
+            intentId: selectedIntentId,
+            userText: userText?.trim() || null,
+            responseKey: currentResponse.key,
+            responseText: currentResponse.text,
+          })
+        : null;
+      const record = savedPhoto
+        ? savedPhoto.checkIn
+        : await saveCheckIn({
+            localUserId: identity.id,
+            state: activeBranchId,
+            intentId: selectedIntentId,
+            userText: userText?.trim() || null,
+            responseKey: currentResponse.key,
+            responseText: currentResponse.text,
+          });
       setRecords((current) => [record, ...current]);
+      if (savedPhoto) {
+        setAttachments((current) => [savedPhoto.attachment, ...current]);
+        setLastSavedAttachment(savedPhoto.attachment);
+      } else {
+        setLastSavedAttachment(null);
+      }
       setLastSavedRecord(record);
       setStorageReady(true);
+      if (savedPhoto) clearPhotoDraft();
       setView("saved");
     } catch {
       setStorageReady(false);
-      setStorageError("这次没有成功记住。你写下的内容还在。");
+      setStorageError(
+        processedPhoto
+          ? "这次没有成功放进本机。照片和你写下的内容还在这里。"
+          : "这次没有成功记住。你写下的内容还在。",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -355,6 +475,9 @@ export default function Home() {
       setRecords((current) =>
         current.filter((record) => record.id !== selectedRecordId),
       );
+      setAttachments((current) =>
+        current.filter((attachment) => attachment.checkInId !== selectedRecordId),
+      );
       setSelectedRecordId(null);
       setConfirmDelete(false);
       setView("timeline");
@@ -369,7 +492,9 @@ export default function Home() {
     setIsExporting(true);
     setDataNotice(null);
     try {
-      const json = await createLocalExportJson();
+      const json = attachments.length
+        ? await createLocalExportJsonV2()
+        : await createLocalExportJson();
       const url = URL.createObjectURL(
         new Blob([json], { type: "application/json;charset=utf-8" }),
       );
@@ -380,7 +505,11 @@ export default function Home() {
         .slice(0, 10)}.json`;
       link.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 0);
-      setDataNotice("副本已经生成，本机记录没有变化。");
+      setDataNotice(
+        attachments.length
+          ? "记录索引已经生成；照片文件的完整归档会在下一切片加入。本机内容没有变化。"
+          : "副本已经生成，本机记录没有变化。",
+      );
     } catch {
       setDataNotice("暂时没有生成文件，本机记录没有变化。");
     } finally {
@@ -395,6 +524,7 @@ export default function Home() {
       const replacement = await clearAllLocalDataAndRecreateIdentity();
       setLocalUser(replacement);
       setRecords([]);
+      setAttachments([]);
       setConfirmClear(false);
       setSelectedRecordId(null);
       setDataNotice("本机记录已经清空。没有云端副本。");
@@ -485,6 +615,21 @@ export default function Home() {
               ))}
             </ol>
 
+            <button
+              className="recent-link motion-rise utility-row photo-utility"
+              onClick={() => openPhotoFlow("home")}
+              type="button"
+            >
+              <span className="recent-link-icon" aria-hidden="true">
+                <Camera size={18} />
+              </span>
+              <span>
+                <strong>拍一张，先放在这里</strong>
+                <small>可以只保存在本机，不识别，也不发送</small>
+              </span>
+              <ChevronRight size={18} aria-hidden="true" />
+            </button>
+
             <button className="recent-link motion-rise utility-row" onClick={openTimeline} type="button">
               <span className="recent-link-icon" aria-hidden="true">
                 <History size={18} />
@@ -501,6 +646,18 @@ export default function Home() {
               记录只留在这台设备上
             </footer>
           </div>
+        )}
+
+        {view === "photo" && activeBranch && currentResponse && (
+          <PhotoFlow
+            busy={isProcessingPhoto || isSaving}
+            error={photoError ?? storageError}
+            onCancel={closePhotoFlow}
+            onFile={(file) => void preparePhoto(file)}
+            onRecordOnly={() => void remember(null)}
+            onWrite={() => setView("write")}
+            previewUrl={photoPreviewUrl}
+          />
         )}
 
         {view === "branch" && activeBranch && (
@@ -602,7 +759,7 @@ export default function Home() {
                 <button
                   className="icon-button"
                   aria-label="关闭文字记录"
-                  onClick={() => setView("reply")}
+                  onClick={() => setView(processedPhoto ? "photo" : "reply")}
                   type="button"
                 >
                   <X size={19} />
@@ -638,7 +795,7 @@ export default function Home() {
                 </button>
                 <button
                   className="secondary-button"
-                  onClick={() => setView("reply")}
+                  onClick={() => setView(processedPhoto ? "photo" : "reply")}
                   type="button"
                 >
                   取消
@@ -657,10 +814,14 @@ export default function Home() {
             </div>
             <p className="soft-kicker centered">已经轻轻放好了</p>
             <h2>已经记下了</h2>
-            <p className="saved-copy">这里不需要给今天打分。</p>
+            <p className="saved-copy">
+              {lastSavedAttachment
+                ? "照片没有被识别或发送。这里也不需要给今天打分。"
+                : "这里不需要给今天打分。"}
+            </p>
             <span className="saved-local">
               <ShieldCheck size={14} aria-hidden="true" />
-              只保存在这台设备上
+              {lastSavedAttachment ? "照片只在这台设备上" : "只保存在这台设备上"}
             </span>
             <div className="saved-actions">
               <button className="primary-button" onClick={goHome} type="button">
@@ -708,16 +869,26 @@ export default function Home() {
                     <ol className="memory-stack memory-ledger">
                       {group.records.map((record, recordIndex) => {
                         const branch = branchFor(record.state);
+                        const attachment = attachmentsByCheckIn.get(record.id);
                         return (
                           <li className="memory-ledger-item" key={record.id}>
                             <button
-                              className="memory-card motion-memory-card ledger-entry"
+                              className={`memory-card motion-memory-card ledger-entry ${attachment ? "memory-card--photo" : ""}`}
                               data-tone={record.state}
                               onClick={() => openRecord(record.id)}
                               style={{ "--motion-delay": `${recordIndex * 70}ms` } as React.CSSProperties}
                               type="button"
                             >
                               <span className="memory-dot" aria-hidden="true" />
+                              {attachment && (
+                                <LocalBlobImage
+                                  alt="这条记录的本机照片"
+                                  blob={attachment.thumbnailBlob}
+                                  className="memory-photo-thumbnail"
+                                  height={attachment.thumbnailHeight}
+                                  width={attachment.thumbnailWidth}
+                                />
+                              )}
                               <span className="memory-card-body">
                                 <time className="memory-meta" dateTime={record.occurredAt}>
                                   <Clock3 size={13} aria-hidden="true" />
@@ -752,6 +923,18 @@ export default function Home() {
               <p>{fullDateLabel(selectedRecord.occurredAt)}</p>
               <h2>{branchFor(selectedRecord.state)?.memoryLabel}</h2>
             </div>
+            {selectedAttachment && (
+              <figure className="detail-photo">
+                <LocalBlobImage
+                  alt="这条记录保存在本机的照片"
+                  blob={selectedAttachment.blob}
+                  className="detail-photo-image"
+                  height={selectedAttachment.height}
+                  width={selectedAttachment.width}
+                />
+                <figcaption>这张照片只保存在当前设备，没有被识别或发送。</figcaption>
+              </figure>
+            )}
             <div className="detail-blocks motion-detail-blocks editorial-sections">
               {selectedRecord.userText && (
                 <section><span>你当时说</span><p>“{selectedRecord.userText}”</p></section>
@@ -785,7 +968,7 @@ export default function Home() {
             <div className="data-heading">
               <p className="soft-kicker"><ShieldCheck size={14} />控制权在你手里</p>
               <h2>本机数据</h2>
-              <p>阶段 1 没有账户，也没有云端副本。</p>
+              <p>阶段 2 仍然没有账户，也没有云端副本。</p>
             </div>
             <section className="data-card local-data-card motion-data-card data-row data-row-info">
               <span className="data-card-icon"><Database size={20} /></span>
@@ -793,7 +976,7 @@ export default function Home() {
             </section>
             <section className="data-card motion-data-card data-row data-row-action">
               <span className="data-card-icon"><FileText size={20} /></span>
-              <div><h3>导出一份副本</h3><p>生成 JSON 文件，不会删除或上传原记录。</p></div>
+              <div><h3>导出一份副本</h3><p>{attachments.length ? "当前生成记录与照片索引；完整照片归档将在下一切片加入。" : "生成 JSON 文件，不会删除或上传原记录。"}</p></div>
               <button className="secondary-button" disabled={isExporting} onClick={() => void exportData()} type="button">
                 <Download size={17} aria-hidden="true" />{isExporting ? "正在生成…" : "导出数据"}
               </button>
@@ -821,6 +1004,45 @@ export default function Home() {
         )}
       </section>
     </main>
+  );
+}
+
+function LocalBlobImage({
+  alt,
+  blob,
+  className,
+  height,
+  width,
+}: {
+  alt: string;
+  blob: Blob;
+  className: string;
+  height: number;
+  width: number;
+}) {
+  const imageRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const objectUrl = URL.createObjectURL(blob);
+    const image = imageRef.current;
+    if (image) image.src = objectUrl;
+    return () => {
+      if (image?.src === objectUrl) image.removeAttribute("src");
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [blob]);
+
+  return (
+    // The image source is a short-lived local Blob URL, so framework image
+    // optimization would add work without creating a network-safe asset.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      alt={alt}
+      className={className}
+      height={height}
+      ref={imageRef}
+      width={width}
+    />
   );
 }
 

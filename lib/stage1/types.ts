@@ -1,15 +1,21 @@
 export const STAGE1_SCHEMA_VERSION = 1 as const;
+export const STAGE2_SCHEMA_VERSION = 2 as const;
+export const CURRENT_LOCAL_SCHEMA_VERSION = STAGE2_SCHEMA_VERSION;
 export const LOCAL_EXPORT_VERSION = 1 as const;
+export const LOCAL_EXPORT_VERSION_2 = 2 as const;
 export const LOCAL_EXPORT_PRODUCT = "减肥拍拍乐" as const;
 
 export const CHECK_IN_STATES = ["food", "rest", "tired", "visit"] as const;
 
 export type CheckInState = (typeof CHECK_IN_STATES)[number];
+export type LocalSchemaVersion =
+  | typeof STAGE1_SCHEMA_VERSION
+  | typeof STAGE2_SCHEMA_VERSION;
 
 export type LocalUserV1 = {
   id: string;
   createdAt: string;
-  schemaVersion: typeof STAGE1_SCHEMA_VERSION;
+  schemaVersion: LocalSchemaVersion;
 };
 
 export type CheckInV1 = {
@@ -35,6 +41,49 @@ export type CreateCheckInInput = {
   occurredAt?: string;
 };
 
+export const LOCAL_IMAGE_MIME_TYPES = ["image/jpeg", "image/webp"] as const;
+
+export type LocalImageMimeType = (typeof LOCAL_IMAGE_MIME_TYPES)[number];
+
+export type LocalImageAttachmentV1 = {
+  id: string;
+  localUserId: string;
+  checkInId: string;
+  createdAt: string;
+  mediaType: "image";
+  mimeType: LocalImageMimeType;
+  blob: Blob;
+  byteSize: number;
+  width: number;
+  height: number;
+  thumbnailBlob: Blob;
+  thumbnailMimeType: LocalImageMimeType;
+  thumbnailByteSize: number;
+  thumbnailWidth: number;
+  thumbnailHeight: number;
+  processingVersion: 1;
+};
+
+export type CreateLocalImageAttachmentInput = {
+  mimeType: LocalImageMimeType;
+  blob: Blob;
+  width: number;
+  height: number;
+  thumbnailBlob: Blob;
+  thumbnailMimeType: LocalImageMimeType;
+  thumbnailWidth: number;
+  thumbnailHeight: number;
+};
+
+export type CreatePhotoCheckInInput = CreateCheckInInput & {
+  image: CreateLocalImageAttachmentInput;
+};
+
+export type SavedPhotoCheckIn = {
+  checkIn: CheckInV1;
+  attachment: LocalImageAttachmentV1;
+};
+
 export type LocalResponseInput = {
   state: CheckInState;
   intentId: string;
@@ -53,6 +102,23 @@ export type LocalExportV1 = {
   exportedAt: string;
   localUser: Pick<LocalUserV1, "id" | "createdAt">;
   checkIns: CheckInV1[];
+};
+
+export type LocalImageAttachmentMetadataV1 = Omit<
+  LocalImageAttachmentV1,
+  "blob" | "thumbnailBlob"
+> & {
+  binaryIncluded: false;
+};
+
+export type LocalExportV2 = {
+  product: typeof LOCAL_EXPORT_PRODUCT;
+  exportVersion: typeof LOCAL_EXPORT_VERSION_2;
+  schemaVersion: typeof STAGE2_SCHEMA_VERSION;
+  exportedAt: string;
+  localUser: Pick<LocalUserV1, "id" | "createdAt">;
+  checkIns: CheckInV1[];
+  attachments: LocalImageAttachmentMetadataV1[];
 };
 
 export type Stage1ErrorCode =
@@ -99,4 +165,3 @@ export function toStage1StorageError(
     { cause: error },
   );
 }
-

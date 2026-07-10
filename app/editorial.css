@@ -281,6 +281,19 @@ body {
   background: rgba(255, 255, 255, 0.3);
 }
 
+.photo-utility {
+  background: linear-gradient(
+    90deg,
+    rgba(223, 232, 222, 0.58),
+    rgba(255, 250, 244, 0.24) 76%,
+    transparent
+  );
+}
+
+.photo-utility + .utility-row {
+  margin-top: 0;
+}
+
 .utility-row .recent-link-icon {
   background: transparent;
   border: 0;
@@ -460,6 +473,20 @@ body {
   box-shadow: none;
 }
 
+.memory-card--photo {
+  grid-template-columns: 0.85rem 4.25rem minmax(0, 1fr) auto;
+}
+
+.memory-photo-thumbnail {
+  aspect-ratio: 1;
+  background: rgba(93, 68, 50, 0.05);
+  border-radius: 4px;
+  display: block;
+  height: 4.25rem;
+  object-fit: cover;
+  width: 4.25rem;
+}
+
 .memory-stack::before {
   background: var(--editorial-line-strong);
 }
@@ -484,6 +511,28 @@ body {
 .editorial-sections section:first-child {
   border-left: 3px solid var(--tone-accent);
   padding-left: 1rem;
+}
+
+.detail-photo {
+  margin: 1.5rem 0 0;
+}
+
+.detail-photo-image {
+  background: rgba(93, 68, 50, 0.05);
+  border-radius: 4px;
+  display: block;
+  height: auto;
+  max-height: 48dvh;
+  object-fit: contain;
+  width: 100%;
+}
+
+.detail-photo figcaption {
+  border-bottom: 1px solid var(--editorial-line);
+  color: var(--c-muted);
+  font-size: 0.75rem;
+  line-height: 1.55;
+  padding: 0.7rem 0.2rem 0.8rem;
 }
 
 .data-card {
@@ -671,6 +720,15 @@ body {
 
   .state-entry .state-card-copy strong {
     font-size: 1.02rem;
+  }
+
+  .memory-card--photo {
+    grid-template-columns: 0.75rem 3.5rem minmax(0, 1fr) auto;
+  }
+
+  .memory-photo-thumbnail {
+    height: 3.5rem;
+    width: 3.5rem;
   }
 }
 

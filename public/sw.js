@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "jianfei-paipai-shell";
-const CACHE_VERSION = "stage1-v1";
+const CACHE_VERSION = "stage2-photo-v1";
 const SHELL_CACHE = `${CACHE_PREFIX}-${CACHE_VERSION}`;
 const APP_SHELL = [
   "/",
@@ -7,7 +7,7 @@ const APP_SHELL = [
   "/app-icon-192.png",
   "/app-icon-512.png",
 ];
-const STATIC_DESTINATIONS = new Set(["style", "script", "font", "image"]);
+const LOCAL_ONLY_PROTOCOLS = new Set(["blob:", "data:"]);
 
 async function cacheAppShell() {
   const cache = await caches.open(SHELL_CACHE);
@@ -78,20 +78,21 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
+  if (LOCAL_ONLY_PROTOCOLS.has(url.protocol)) return;
   if (url.origin !== self.location.origin) return;
 
-  // Stage 1 caches only the single-page app shell and build-owned assets.
-  // IndexedDB records, API responses, and any future server data stay outside
-  // Cache Storage by construction.
+  // Cache only the single-page app shell and build-owned assets. IndexedDB
+  // records, local photo Blobs, provider responses, and future server data stay
+  // outside Cache Storage by construction.
   if (request.mode === "navigate" && url.pathname === "/") {
     event.respondWith(networkFirstShell(request));
     return;
   }
 
   if (
-    STATIC_DESTINATIONS.has(request.destination) &&
-    url.pathname !== "/sw.js" &&
-    !url.pathname.startsWith("/api/")
+    APP_SHELL.includes(url.pathname) ||
+    url.pathname.startsWith("/assets/") ||
+    url.pathname.startsWith("/_next/static/")
   ) {
     event.respondWith(cacheFirstStatic(request));
   }

@@ -87,8 +87,9 @@ test("provides an installable, same-origin-only PWA shell", async () => {
   assert.match(worker, /self\.addEventListener\(["']fetch["']/);
   assert.match(worker, /request\.method !== ["']GET["']/);
   assert.match(worker, /url\.origin !== self\.location\.origin/);
-  assert.match(worker, /STATIC_DESTINATIONS/);
-  assert.match(worker, /!url\.pathname\.startsWith\(["']\/api\/["']\)/);
+  assert.match(worker, /APP_SHELL\.includes\(url\.pathname\)/);
+  assert.match(worker, /url\.pathname\.startsWith\(["']\/assets\/["']\)/);
+  assert.doesNotMatch(worker, /cache\.put\([^\n]*\/api\//);
   assert.doesNotMatch(worker, /\bindexedDB\s*[.(]/);
   assert.doesNotMatch(worker, /https?:\/\//);
 });
@@ -201,13 +202,19 @@ test("exposes the stable lib/stage1 local product contract", async () => {
     read("lib/stage1/types.ts"),
     read("lib/stage1/db.ts"),
   ]);
+  const checkInV1Contract =
+    typesSource.match(/export type CheckInV1\s*=\s*\{[\s\S]*?\n\};/)?.[0] ?? "";
+  const stage1Stores =
+    databaseSource.match(/const STAGE1_STORES\s*=\s*\{[\s\S]*?\}\s*as const;/)?.[0] ?? "";
+  assert.ok(checkInV1Contract, "the CheckInV1 contract must remain explicit");
+  assert.ok(stage1Stores, "the v1 database store declaration must remain explicit");
   assert.doesNotMatch(
-    typesSource,
+    checkInV1Contract,
     /\b(?:photo|attachment|account|sync|modelKey|calorie)\w*\s*[?:]/i,
     "the v1 local contract must not prebuild later-stage data fields",
   );
   assert.doesNotMatch(
-    databaseSource,
+    stage1Stores,
     /["'](?:photos|attachments|accounts|sync|models|preferences)["']/i,
     "the v1 database must contain only the local identity and check-in tables",
   );
