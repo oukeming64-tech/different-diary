@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "jianfei-paipai-shell";
-const CACHE_VERSION = "stage2-photo-v1";
+const CACHE_VERSION = "stage3-activity-reward-v1";
 const SHELL_CACHE = `${CACHE_PREFIX}-${CACHE_VERSION}`;
 const APP_SHELL = [
   "/",

@@ -32,6 +32,7 @@ import {
   type AmbientSceneTone,
 } from "./ambient-scene";
 import { ActivityFlow } from "./activity-flow";
+import { ActivityReward } from "./activity-reward";
 import { PhotoFlow } from "./photo-flow";
 
 import {
@@ -915,38 +916,42 @@ export default function Home() {
         )}
 
         {view === "saved" && activeBranch && lastSavedRecord && (
-          <div className="screen saved-screen screen-enter motion-saved">
-            <div className="saved-orbit motion-success" aria-hidden="true">
-              <i className="saved-ripple saved-ripple-one" />
-              <i className="saved-ripple saved-ripple-two" />
-              <span>{activeBranch.icon}</span>
-            </div>
-            <p className="soft-kicker centered">已经轻轻放好了</p>
-            <h2>已经记下了</h2>
-            <p className="saved-copy">
-              {lastSavedActivity
-                ? "这次运动只是生活里发生过的一件事，不会被换算成完成度。"
-                : lastSavedAttachment
+          lastSavedActivity ? (
+            <ActivityReward
+              activity={lastSavedActivity}
+              onHome={goHome}
+              onTimeline={openTimeline}
+            />
+          ) : (
+            <div className="screen saved-screen screen-enter motion-saved">
+              <div className="saved-orbit motion-success" aria-hidden="true">
+                <i className="saved-ripple saved-ripple-one" />
+                <i className="saved-ripple saved-ripple-two" />
+                <span>{activeBranch.icon}</span>
+              </div>
+              <p className="soft-kicker centered">已经轻轻放好了</p>
+              <h2>已经记下了</h2>
+              <p className="saved-copy">
+                {lastSavedAttachment
                   ? "照片没有被识别或发送。这里也不需要给今天打分。"
                   : "这里不需要给今天打分。"}
-            </p>
-            <span className="saved-local">
-              <ShieldCheck size={14} aria-hidden="true" />
-              {lastSavedAttachment
-                ? "照片只在这台设备上"
-                : lastSavedActivity
-                  ? "运动记录只在这台设备上"
+              </p>
+              <span className="saved-local">
+                <ShieldCheck size={14} aria-hidden="true" />
+                {lastSavedAttachment
+                  ? "照片只在这台设备上"
                   : "只保存在这台设备上"}
-            </span>
-            <div className="saved-actions">
-              <button className="primary-button" onClick={goHome} type="button">
-                <HomeIcon size={18} aria-hidden="true" />回到首页
-              </button>
-              <button className="secondary-button" onClick={openTimeline} type="button">
-                <History size={18} aria-hidden="true" />看看最近
-              </button>
+              </span>
+              <div className="saved-actions">
+                <button className="primary-button" onClick={goHome} type="button">
+                  <HomeIcon size={18} aria-hidden="true" />回到首页
+                </button>
+                <button className="secondary-button" onClick={openTimeline} type="button">
+                  <History size={18} aria-hidden="true" />看看最近
+                </button>
+              </div>
             </div>
-          </div>
+          )
         )}
 
         {view === "timeline" && (

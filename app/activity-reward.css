@@ -1,0 +1,242 @@
+.activity-reward {
+  --reward-gold: #d69a43;
+  --reward-gold-deep: #a96d28;
+  --reward-green: #698876;
+  background:
+    radial-gradient(circle at 50% 27%, rgba(246, 193, 91, 0.26), transparent 16rem),
+    radial-gradient(circle at 85% 4%, rgba(111, 145, 125, 0.14), transparent 18rem),
+    linear-gradient(180deg, rgba(255, 250, 239, 0.82), rgba(248, 241, 226, 0.6));
+  overflow: hidden;
+}
+
+.activity-reward__celebration {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  height: 13.5rem;
+  justify-content: center;
+  margin: 1.2rem auto 0.35rem;
+  position: relative;
+  width: 13.5rem;
+}
+
+.activity-reward__rays {
+  animation: activity-reward-rays 16s linear infinite;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(214, 154, 67, 0.34) 0deg 5deg,
+    transparent 5deg 24deg
+  );
+  border-radius: 50%;
+  inset: 0.5rem;
+  -webkit-mask: radial-gradient(circle, transparent 0 35%, #000 36% 67%, transparent 68%);
+  mask: radial-gradient(circle, transparent 0 35%, #000 36% 67%, transparent 68%);
+  opacity: 0.76;
+  position: absolute;
+}
+
+.activity-reward__halo {
+  border: 1px solid rgba(214, 154, 67, 0.45);
+  border-radius: 50%;
+  position: absolute;
+}
+
+.activity-reward__halo--one {
+  animation: activity-reward-halo 1.8s 180ms both cubic-bezier(0.16, 0.8, 0.22, 1);
+  height: 7.3rem;
+  width: 7.3rem;
+}
+
+.activity-reward__halo--two {
+  animation: activity-reward-halo 2.25s 420ms both cubic-bezier(0.16, 0.8, 0.22, 1);
+  height: 9.7rem;
+  width: 9.7rem;
+}
+
+.activity-reward__core {
+  align-items: center;
+  animation: activity-reward-pop 860ms 80ms backwards cubic-bezier(0.16, 0.86, 0.22, 1);
+  background:
+    radial-gradient(circle at 36% 28%, rgba(255, 255, 255, 0.9), transparent 28%),
+    linear-gradient(145deg, #f4c668, var(--reward-gold));
+  border: 1px solid rgba(169, 109, 40, 0.26);
+  border-radius: 50%;
+  box-shadow:
+    0 1.25rem 3rem rgba(138, 88, 30, 0.2),
+    0 0 0 0.65rem rgba(255, 251, 240, 0.66),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  color: #69431f;
+  display: flex;
+  height: 6.25rem;
+  justify-content: center;
+  position: relative;
+  width: 6.25rem;
+  z-index: 3;
+}
+
+.activity-reward__confetti {
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 2;
+}
+
+.activity-reward__confetti i {
+  animation: activity-reward-confetti 1.1s backwards cubic-bezier(0.1, 0.8, 0.24, 1);
+  background: var(--reward-gold);
+  border-radius: 2px;
+  height: 0.7rem;
+  left: 50%;
+  position: absolute;
+  top: 50%;
+  width: 0.24rem;
+}
+
+.activity-reward__confetti i:nth-child(2n) {
+  background: var(--reward-green);
+  height: 0.28rem;
+  width: 0.7rem;
+}
+
+.activity-reward__confetti i:nth-child(3n) {
+  background: #dc7d5d;
+}
+
+.activity-reward__confetti i:nth-child(1) { --reward-x: -5.6rem; --reward-y: -4.2rem; --reward-r: -35deg; animation-delay: 170ms; }
+.activity-reward__confetti i:nth-child(2) { --reward-x: -1.5rem; --reward-y: -6rem; --reward-r: 18deg; animation-delay: 230ms; }
+.activity-reward__confetti i:nth-child(3) { --reward-x: 3.2rem; --reward-y: -5.1rem; --reward-r: 52deg; animation-delay: 200ms; }
+.activity-reward__confetti i:nth-child(4) { --reward-x: 5.7rem; --reward-y: -1.7rem; --reward-r: 78deg; animation-delay: 280ms; }
+.activity-reward__confetti i:nth-child(5) { --reward-x: 5rem; --reward-y: 3.6rem; --reward-r: 112deg; animation-delay: 250ms; }
+.activity-reward__confetti i:nth-child(6) { --reward-x: 1.2rem; --reward-y: 5.8rem; --reward-r: 145deg; animation-delay: 320ms; }
+.activity-reward__confetti i:nth-child(7) { --reward-x: -3.1rem; --reward-y: 5.1rem; --reward-r: 198deg; animation-delay: 290ms; }
+.activity-reward__confetti i:nth-child(8) { --reward-x: -5.9rem; --reward-y: 1.8rem; --reward-r: 235deg; animation-delay: 350ms; }
+.activity-reward__confetti i:nth-child(9) { --reward-x: -4.8rem; --reward-y: -1.9rem; --reward-r: 278deg; animation-delay: 310ms; }
+.activity-reward__confetti i:nth-child(10) { --reward-x: 4.5rem; --reward-y: 1rem; --reward-r: 320deg; animation-delay: 380ms; }
+
+.activity-reward__eyebrow {
+  color: var(--reward-gold-deep);
+  font-size: 0.76rem;
+  font-weight: 760;
+  letter-spacing: 0.1em;
+  margin: 0;
+}
+
+.activity-reward h2 {
+  color: #44352a;
+  font-size: clamp(2.15rem, 9.7vw, 2.8rem);
+  line-height: 1.16;
+  margin: 0.65rem auto 0;
+  max-width: 22rem;
+}
+
+.activity-reward__summary {
+  color: var(--reward-green);
+  font-size: 0.88rem;
+  font-weight: 680;
+  margin: 1rem 0 0;
+}
+
+.activity-reward__copy {
+  color: var(--c-ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.75;
+  margin: 0.75rem auto 1rem;
+  max-width: 21rem;
+}
+
+.activity-reward__local {
+  color: var(--reward-green);
+}
+
+.activity-reward__actions {
+  display: grid;
+  gap: 0.65rem;
+  padding-top: 1.25rem;
+}
+
+.activity-reward.screen-enter .activity-reward__eyebrow,
+.activity-reward.screen-enter h2,
+.activity-reward.screen-enter .activity-reward__summary,
+.activity-reward.screen-enter .activity-reward__copy,
+.activity-reward.screen-enter .activity-reward__local,
+.activity-reward.screen-enter .activity-reward__actions {
+  animation: activity-reward-rise 620ms backwards cubic-bezier(0.18, 0.78, 0.22, 1);
+}
+
+.activity-reward.screen-enter .activity-reward__eyebrow { animation-delay: 300ms; }
+.activity-reward.screen-enter h2 { animation-delay: 350ms; }
+.activity-reward.screen-enter .activity-reward__summary { animation-delay: 420ms; }
+.activity-reward.screen-enter .activity-reward__copy { animation-delay: 470ms; }
+.activity-reward.screen-enter .activity-reward__local { animation-delay: 520ms; }
+.activity-reward.screen-enter .activity-reward__actions { animation-delay: 580ms; }
+
+@keyframes activity-reward-pop {
+  0% {
+    filter: blur(3px);
+    opacity: 0;
+    transform: scale(0.25) rotate(-14deg);
+  }
+  68% {
+    filter: blur(0);
+    opacity: 1;
+    transform: scale(1.12) rotate(3deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes activity-reward-halo {
+  0% { opacity: 0; transform: scale(0.42); }
+  28% { opacity: 0.7; }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+@keyframes activity-reward-rays {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes activity-reward-confetti {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2) rotate(0);
+  }
+  18% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--reward-x)), calc(-50% + var(--reward-y))) scale(1) rotate(var(--reward-r));
+  }
+}
+
+@keyframes activity-reward-rise {
+  from { opacity: 0; transform: translateY(0.8rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-height: 760px) {
+  .activity-reward__celebration {
+    height: 10.5rem;
+    margin-top: 0;
+    transform: scale(0.82);
+    width: 10.5rem;
+  }
+
+  .activity-reward h2 {
+    font-size: clamp(1.9rem, 8.8vw, 2.4rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activity-reward *,
+  .activity-reward *::before,
+  .activity-reward *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .activity-reward__halo,
+  .activity-reward__confetti {
+    display: none;
+  }
+}

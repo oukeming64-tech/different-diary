@@ -21,6 +21,8 @@ test("keeps movement responsibilities in small explicit units", async () => {
   for (const file of [
     "app/activity-flow.tsx",
     "app/activity-flow.css",
+    "app/activity-reward.tsx",
+    "app/activity-reward.css",
     "lib/stage3/record-activity.ts",
     "lib/stage3/storage.ts",
     "lib/stage3/presentation.ts",
@@ -32,6 +34,7 @@ test("keeps movement responsibilities in small explicit units", async () => {
 
   const page = await read("app/page.tsx");
   assert.match(page, /<ActivityFlow\b/);
+  assert.match(page, /<ActivityReward\b/);
   assert.match(page, /recordActivityLocally\s*\(/);
   assert.doesNotMatch(
     page,
@@ -53,11 +56,12 @@ test("keeps the four emotional entries primary and movement auxiliary", async ()
 });
 
 test("makes every movement detail optional and keeps scoring out", async () => {
-  const [flow, presentation] = await Promise.all([
+  const [flow, reward, presentation] = await Promise.all([
     read("app/activity-flow.tsx"),
+    read("app/activity-reward.tsx"),
     read("lib/stage3/presentation.ts"),
   ]);
-  const copy = `${flow}\n${presentation}`;
+  const copy = `${flow}\n${reward}\n${presentation}`;
 
   for (const label of ["做了什么", "时长", "步数", "距离", "还想留一句"]) {
     assert.match(copy, new RegExp(label));
@@ -71,10 +75,33 @@ test("makes every movement detail optional and keeps scoring out", async () => {
   );
 });
 
+test("celebrates the movement itself with a large accessible CSS animation", async () => {
+  const [reward, styles] = await Promise.all([
+    read("app/activity-reward.tsx"),
+    read("app/activity-reward.css"),
+  ]);
+
+  assert.match(reward, /刚才那一下，算数/);
+  assert.match(reward, /你觉得运动了，[\s\S]{0,80}那就是消耗了。/);
+  assert.match(reward, /不用等手表点头/);
+  assert.match(reward, /aria-hidden=["']true["']/);
+  for (const keyframe of [
+    "activity-reward-pop",
+    "activity-reward-halo",
+    "activity-reward-confetti",
+  ]) {
+    assert.match(styles, new RegExp(`@keyframes\\s+${keyframe}\\b`));
+    assert.match(styles, new RegExp(`animation:[^;]*${keyframe}`));
+  }
+  assert.match(styles, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
+  assert.match(styles, /animation:\s*none\s*!important/);
+});
+
 test("keeps stage 3 local-only and provider-free", async () => {
   const sources = await Promise.all(
     [
       "app/activity-flow.tsx",
+      "app/activity-reward.tsx",
       "lib/stage3/record-activity.ts",
       "lib/stage3/storage.ts",
       "lib/stage3/presentation.ts",
