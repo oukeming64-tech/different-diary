@@ -48,10 +48,12 @@ export async function clearAllLocalDataAndRecreateIdentity(
     return await database.transaction(
       "rw",
       database.attachments,
+      database.activities,
       database.checkIns,
       database.localUsers,
       async () => {
         await database.attachments.clear();
+        await database.activities.clear();
         await database.checkIns.clear();
         await database.localUsers.clear();
 

@@ -315,6 +315,15 @@ body {
   );
 }
 
+.activity-utility {
+  background: linear-gradient(
+    90deg,
+    rgba(225, 234, 228, 0.48),
+    rgba(255, 250, 244, 0.2) 76%,
+    transparent
+  );
+}
+
 .photo-utility + .utility-row {
   margin-top: 0;
 }
@@ -500,6 +509,11 @@ body {
 
 .memory-card--photo {
   grid-template-columns: 0.85rem 4.25rem minmax(0, 1fr) auto;
+}
+
+.memory-card--activity .memory-dot {
+  background: #668071;
+  border-color: rgba(255, 250, 244, 0.82);
 }
 
 .memory-photo-thumbnail {

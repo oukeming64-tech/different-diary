@@ -17,6 +17,28 @@ import {
   toStage1StorageError,
 } from "./types";
 
+export function toLocalImageAttachmentMetadata(
+  attachment: Awaited<ReturnType<typeof listAttachments>>[number],
+): LocalImageAttachmentMetadataV1 {
+  return {
+    id: attachment.id,
+    localUserId: attachment.localUserId,
+    checkInId: attachment.checkInId,
+    createdAt: attachment.createdAt,
+    mediaType: attachment.mediaType,
+    mimeType: attachment.mimeType,
+    byteSize: attachment.byteSize,
+    width: attachment.width,
+    height: attachment.height,
+    thumbnailMimeType: attachment.thumbnailMimeType,
+    thumbnailByteSize: attachment.thumbnailByteSize,
+    thumbnailWidth: attachment.thumbnailWidth,
+    thumbnailHeight: attachment.thumbnailHeight,
+    processingVersion: attachment.processingVersion,
+    binaryIncluded: false,
+  };
+}
+
 export async function createLocalExport(
   database: Stage1Database = getStage1Database(),
   now: Date = new Date(),
@@ -60,23 +82,7 @@ export async function createLocalExportV2(
       listAttachments(localUser.id, database),
     ]);
     const attachments: LocalImageAttachmentMetadataV1[] = localAttachments.map(
-      (attachment) => ({
-        id: attachment.id,
-        localUserId: attachment.localUserId,
-        checkInId: attachment.checkInId,
-        createdAt: attachment.createdAt,
-        mediaType: attachment.mediaType,
-        mimeType: attachment.mimeType,
-        byteSize: attachment.byteSize,
-        width: attachment.width,
-        height: attachment.height,
-        thumbnailMimeType: attachment.thumbnailMimeType,
-        thumbnailByteSize: attachment.thumbnailByteSize,
-        thumbnailWidth: attachment.thumbnailWidth,
-        thumbnailHeight: attachment.thumbnailHeight,
-        processingVersion: attachment.processingVersion,
-        binaryIncluded: false,
-      }),
+      toLocalImageAttachmentMetadata,
     );
 
     return {

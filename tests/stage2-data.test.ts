@@ -94,13 +94,14 @@ test("upgrades the existing v1 database in place without losing check-ins", asyn
   try {
     await upgraded.open();
 
-    assert.equal(upgraded.verno, 2);
+    assert.equal(upgraded.verno, CURRENT_LOCAL_SCHEMA_VERSION);
     assert.deepEqual(await upgraded.checkIns.get(legacyCheckIn.id), legacyCheckIn);
     assert.equal(
       (await upgraded.localUsers.get(legacyUser.id))?.schemaVersion,
       CURRENT_LOCAL_SCHEMA_VERSION,
     );
     assert.equal(await upgraded.attachments.count(), 0);
+    assert.equal(await upgraded.activities.count(), 0);
   } finally {
     await destroyDatabase(upgraded);
   }
@@ -276,4 +277,3 @@ test("exports attachment metadata without embedding image binaries", async () =>
     await destroyDatabase(database);
   }
 });
-

@@ -1,8 +1,10 @@
 export const STAGE1_SCHEMA_VERSION = 1 as const;
 export const STAGE2_SCHEMA_VERSION = 2 as const;
-export const CURRENT_LOCAL_SCHEMA_VERSION = STAGE2_SCHEMA_VERSION;
+export const STAGE3_SCHEMA_VERSION = 3 as const;
+export const CURRENT_LOCAL_SCHEMA_VERSION = STAGE3_SCHEMA_VERSION;
 export const LOCAL_EXPORT_VERSION = 1 as const;
 export const LOCAL_EXPORT_VERSION_2 = 2 as const;
+export const LOCAL_EXPORT_VERSION_3 = 3 as const;
 export const LOCAL_EXPORT_PRODUCT = "减肥拍拍乐" as const;
 
 export const CHECK_IN_STATES = ["food", "rest", "tired", "visit"] as const;
@@ -10,7 +12,8 @@ export const CHECK_IN_STATES = ["food", "rest", "tired", "visit"] as const;
 export type CheckInState = (typeof CHECK_IN_STATES)[number];
 export type LocalSchemaVersion =
   | typeof STAGE1_SCHEMA_VERSION
-  | typeof STAGE2_SCHEMA_VERSION;
+  | typeof STAGE2_SCHEMA_VERSION
+  | typeof STAGE3_SCHEMA_VERSION;
 
 export type LocalUserV1 = {
   id: string;
@@ -84,6 +87,49 @@ export type SavedPhotoCheckIn = {
   attachment: LocalImageAttachmentV1;
 };
 
+export const ACTIVITY_CATEGORIES = [
+  "walking",
+  "running",
+  "strength",
+  "cycling",
+  "swimming",
+  "ball",
+  "stretching",
+  "other",
+  "unspecified",
+] as const;
+
+export type ActivityCategory = (typeof ACTIVITY_CATEGORIES)[number];
+
+export type ActivityRecordV1 = {
+  id: string;
+  localUserId: string;
+  checkInId: string;
+  createdAt: string;
+  category: ActivityCategory;
+  customLabel: string | null;
+  durationMinutes: number | null;
+  steps: number | null;
+  distanceKm: number | null;
+  note: string | null;
+};
+
+export type CreateActivityRecordInput = {
+  localUserId: string;
+  category?: ActivityCategory | null;
+  customLabel?: string | null;
+  durationMinutes?: number | null;
+  steps?: number | null;
+  distanceKm?: number | null;
+  note?: string | null;
+  occurredAt?: string;
+};
+
+export type SavedActivityCheckIn = {
+  checkIn: CheckInV1;
+  activity: ActivityRecordV1;
+};
+
 export type LocalResponseInput = {
   state: CheckInState;
   intentId: string;
@@ -119,6 +165,17 @@ export type LocalExportV2 = {
   localUser: Pick<LocalUserV1, "id" | "createdAt">;
   checkIns: CheckInV1[];
   attachments: LocalImageAttachmentMetadataV1[];
+};
+
+export type LocalExportV3 = {
+  product: typeof LOCAL_EXPORT_PRODUCT;
+  exportVersion: typeof LOCAL_EXPORT_VERSION_3;
+  schemaVersion: typeof STAGE3_SCHEMA_VERSION;
+  exportedAt: string;
+  localUser: Pick<LocalUserV1, "id" | "createdAt">;
+  checkIns: CheckInV1[];
+  attachments: LocalImageAttachmentMetadataV1[];
+  activities: ActivityRecordV1[];
 };
 
 export type Stage1ErrorCode =

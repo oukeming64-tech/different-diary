@@ -13,6 +13,7 @@ import {
   Download,
   Dumbbell,
   FileText,
+  Footprints,
   History,
   Home as HomeIcon,
   Leaf,
@@ -30,6 +31,7 @@ import {
   AmbientScene,
   type AmbientSceneTone,
 } from "./ambient-scene";
+import { ActivityFlow } from "./activity-flow";
 import { PhotoFlow } from "./photo-flow";
 
 import {
@@ -43,6 +45,7 @@ import {
   listCheckIns,
   saveCheckIn,
   selectLocalResponse,
+  type ActivityRecordV1,
   type CheckInState,
   type CheckInV1,
   type LocalImageAttachmentV1,
@@ -55,10 +58,18 @@ import {
   recordPhotoOnly,
   type ProcessedPhoto,
 } from "../lib/stage2";
+import {
+  createLocalExportJsonV3,
+  formatActivitySummary,
+  listActivities,
+  recordActivityLocally,
+  type CreateActivityRecordInput,
+} from "../lib/stage3";
 
 type View =
   | "home"
   | "branch"
+  | "activity"
   | "photo"
   | "reply"
   | "write"
@@ -134,7 +145,7 @@ const branches: Branch[] = [
     options: [
       { id: "rest", label: "我只是想休息" },
       { id: "eat", label: "我现在很想吃" },
-      { id: "remember", label: "帮我记下今天练过了" },
+      { id: "remember", label: "顺手记下刚才的运动" },
       { id: "talk", label: "我想说说此刻的感受" },
     ],
   },
@@ -226,16 +237,20 @@ export default function Home() {
   const [localUser, setLocalUser] = useState<LocalUserV1 | null>(null);
   const [records, setRecords] = useState<CheckInV1[]>([]);
   const [attachments, setAttachments] = useState<LocalImageAttachmentV1[]>([]);
+  const [activities, setActivities] = useState<ActivityRecordV1[]>([]);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [lastSavedRecord, setLastSavedRecord] = useState<CheckInV1 | null>(null);
   const [lastSavedAttachment, setLastSavedAttachment] =
     useState<LocalImageAttachmentV1 | null>(null);
+  const [lastSavedActivity, setLastSavedActivity] =
+    useState<ActivityRecordV1 | null>(null);
   const [processedPhoto, setProcessedPhoto] = useState<ProcessedPhoto | null>(
     null,
   );
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [photoOrigin, setPhotoOrigin] = useState<"home" | "branch">("home");
+  const [activityOrigin, setActivityOrigin] = useState<"home" | "branch">("home");
   const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
@@ -256,6 +271,13 @@ export default function Home() {
   const selectedAttachment = selectedRecord
     ? attachmentsByCheckIn.get(selectedRecord.id)
     : undefined;
+  const activitiesByCheckIn = useMemo(
+    () => new Map(activities.map((activity) => [activity.checkInId, activity])),
+    [activities],
+  );
+  const selectedActivity = selectedRecord
+    ? activitiesByCheckIn.get(selectedRecord.id)
+    : undefined;
 
   const groupedRecords = useMemo(() => {
     const groups: Array<{ key: string; label: string; records: CheckInV1[] }> = [];
@@ -275,14 +297,16 @@ export default function Home() {
     async function prepareLocalSpace() {
       try {
         const identity = await ensureLocalIdentity();
-        const [localRecords, localAttachments] = await Promise.all([
+        const [localRecords, localAttachments, localActivities] = await Promise.all([
           listCheckIns(identity.id),
           listAttachments(identity.id),
+          listActivities(identity.id),
         ]);
         if (!active) return;
         setLocalUser(identity);
         setRecords(localRecords);
         setAttachments(localAttachments);
+        setActivities(localActivities);
         setStorageReady(true);
         setStorageError(null);
       } catch (error) {
@@ -327,6 +351,7 @@ export default function Home() {
     setDraftText("");
     setLastSavedRecord(null);
     setLastSavedAttachment(null);
+    setLastSavedActivity(null);
     setStorageError(null);
     clearPhotoDraft();
   }
@@ -364,10 +389,30 @@ export default function Home() {
     setView("photo");
   }
 
+  function openActivityFlow(origin: "home" | "branch") {
+    clearPhotoDraft();
+    setActivityOrigin(origin);
+    setActiveBranchId("tired");
+    setSelectedIntentId("activity-record");
+    setCurrentResponse(null);
+    setStorageError(null);
+    setView("activity");
+  }
+
+  function closeActivityFlow() {
+    setStorageError(null);
+    if (activityOrigin === "branch") setView("branch");
+    else goHome();
+  }
+
   function chooseIntent(intentId: string) {
     if (!activeBranchId) return;
     if (activeBranchId === "food" && intentId === "photo-no-calories") {
       openPhotoFlow("branch");
+      return;
+    }
+    if (activeBranchId === "tired" && intentId === "remember") {
+      openActivityFlow("branch");
       return;
     }
     const response = selectLocalResponse({
@@ -447,6 +492,7 @@ export default function Home() {
       } else {
         setLastSavedAttachment(null);
       }
+      setLastSavedActivity(null);
       setLastSavedRecord(record);
       setStorageReady(true);
       if (savedPhoto) clearPhotoDraft();
@@ -458,6 +504,32 @@ export default function Home() {
           ? "这次没有成功放进本机。照片和你写下的内容还在这里。"
           : "这次没有成功记住。你写下的内容还在。",
       );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function rememberActivity(
+    draft: Omit<CreateActivityRecordInput, "localUserId">,
+  ) {
+    setIsSaving(true);
+    setStorageError(null);
+    try {
+      const identity = await ensureIdentityForSave();
+      const saved = await recordActivityLocally({
+        ...draft,
+        localUserId: identity.id,
+      });
+      setRecords((current) => [saved.checkIn, ...current]);
+      setActivities((current) => [saved.activity, ...current]);
+      setLastSavedRecord(saved.checkIn);
+      setLastSavedAttachment(null);
+      setLastSavedActivity(saved.activity);
+      setStorageReady(true);
+      setView("saved");
+    } catch {
+      setStorageReady(false);
+      setStorageError("这次没有成功记住。刚才填的内容还在这里，可以再试一次。");
     } finally {
       setIsSaving(false);
     }
@@ -486,6 +558,9 @@ export default function Home() {
       setAttachments((current) =>
         current.filter((attachment) => attachment.checkInId !== selectedRecordId),
       );
+      setActivities((current) =>
+        current.filter((activity) => activity.checkInId !== selectedRecordId),
+      );
       setSelectedRecordId(null);
       setConfirmDelete(false);
       setView("timeline");
@@ -500,9 +575,11 @@ export default function Home() {
     setIsExporting(true);
     setDataNotice(null);
     try {
-      const json = attachments.length
-        ? await createLocalExportJsonV2()
-        : await createLocalExportJson();
+      const json = activities.length
+        ? await createLocalExportJsonV3()
+        : attachments.length
+          ? await createLocalExportJsonV2()
+          : await createLocalExportJson();
       const url = URL.createObjectURL(
         new Blob([json], { type: "application/json;charset=utf-8" }),
       );
@@ -515,8 +592,10 @@ export default function Home() {
       window.setTimeout(() => URL.revokeObjectURL(url), 0);
       setDataNotice(
         attachments.length
-          ? "记录索引已经生成；照片文件的完整归档会在下一切片加入。本机内容没有变化。"
-          : "副本已经生成，本机记录没有变化。",
+          ? "记录、运动详情和照片索引已经生成；照片文件仍只留在本机。"
+          : activities.length
+            ? "记录和运动详情已经生成副本，本机内容没有变化。"
+            : "副本已经生成，本机记录没有变化。",
       );
     } catch {
       setDataNotice("暂时没有生成文件，本机记录没有变化。");
@@ -533,6 +612,7 @@ export default function Home() {
       setLocalUser(replacement);
       setRecords([]);
       setAttachments([]);
+      setActivities([]);
       setConfirmClear(false);
       setSelectedRecordId(null);
       setDataNotice("本机记录已经清空。没有云端副本。");
@@ -639,6 +719,21 @@ export default function Home() {
                 <ChevronRight size={18} aria-hidden="true" />
               </button>
 
+              <button
+                className="recent-link motion-rise utility-row activity-utility"
+                onClick={() => openActivityFlow("home")}
+                type="button"
+              >
+                <span className="recent-link-icon" aria-hidden="true">
+                  <Footprints size={18} />
+                </span>
+                <span>
+                  <strong>记一下运动</strong>
+                  <small>类型、时长、步数和距离都可以跳过</small>
+                </span>
+                <ChevronRight size={18} aria-hidden="true" />
+              </button>
+
               <button className="recent-link motion-rise utility-row" onClick={openTimeline} type="button">
                 <span className="recent-link-icon" aria-hidden="true">
                   <History size={18} />
@@ -651,6 +746,15 @@ export default function Home() {
               </button>
             </nav>
           </div>
+        )}
+
+        {view === "activity" && (
+          <ActivityFlow
+            busy={isSaving}
+            error={storageError}
+            onCancel={closeActivityFlow}
+            onSave={rememberActivity}
+          />
         )}
 
         {view === "photo" && activeBranch && currentResponse && (
@@ -820,13 +924,19 @@ export default function Home() {
             <p className="soft-kicker centered">已经轻轻放好了</p>
             <h2>已经记下了</h2>
             <p className="saved-copy">
-              {lastSavedAttachment
-                ? "照片没有被识别或发送。这里也不需要给今天打分。"
-                : "这里不需要给今天打分。"}
+              {lastSavedActivity
+                ? "这次运动只是生活里发生过的一件事，不会被换算成完成度。"
+                : lastSavedAttachment
+                  ? "照片没有被识别或发送。这里也不需要给今天打分。"
+                  : "这里不需要给今天打分。"}
             </p>
             <span className="saved-local">
               <ShieldCheck size={14} aria-hidden="true" />
-              {lastSavedAttachment ? "照片只在这台设备上" : "只保存在这台设备上"}
+              {lastSavedAttachment
+                ? "照片只在这台设备上"
+                : lastSavedActivity
+                  ? "运动记录只在这台设备上"
+                  : "只保存在这台设备上"}
             </span>
             <div className="saved-actions">
               <button className="primary-button" onClick={goHome} type="button">
@@ -875,10 +985,11 @@ export default function Home() {
                       {group.records.map((record, recordIndex) => {
                         const branch = branchFor(record.state);
                         const attachment = attachmentsByCheckIn.get(record.id);
+                        const activity = activitiesByCheckIn.get(record.id);
                         return (
                           <li className="memory-ledger-item" key={record.id}>
                             <button
-                              className={`memory-card motion-memory-card ledger-entry ${attachment ? "memory-card--photo" : ""}`}
+                              className={`memory-card motion-memory-card ledger-entry ${attachment ? "memory-card--photo" : ""} ${activity ? "memory-card--activity" : ""}`}
                               data-tone={record.state}
                               onClick={() => openRecord(record.id)}
                               style={{ "--motion-delay": `${recordIndex * 70}ms` } as React.CSSProperties}
@@ -897,13 +1008,22 @@ export default function Home() {
                               <span className="memory-card-body">
                                 <time className="memory-meta" dateTime={record.occurredAt}>
                                   <Clock3 size={13} aria-hidden="true" />
-                                  {timeLabel(record.occurredAt)} · {branch?.memoryLabel}
+                                  {timeLabel(record.occurredAt)} · {activity ? "记了一次运动" : branch?.memoryLabel}
                                 </time>
-                                {record.userText && <strong>“{record.userText}”</strong>}
-                                <span className="memory-intent">
-                                  {intentLabel(record.state, record.intentId)}
-                                </span>
-                                <small>{record.responseText}</small>
+                                {activity ? (
+                                  <>
+                                    <strong>{formatActivitySummary(activity)}</strong>
+                                    {activity.note && <small>“{activity.note}”</small>}
+                                  </>
+                                ) : (
+                                  <>
+                                    {record.userText && <strong>“{record.userText}”</strong>}
+                                    <span className="memory-intent">
+                                      {intentLabel(record.state, record.intentId)}
+                                    </span>
+                                    <small>{record.responseText}</small>
+                                  </>
+                                )}
                               </span>
                               <ChevronRight size={17} aria-hidden="true" />
                             </button>
@@ -923,10 +1043,10 @@ export default function Home() {
             <CalmBack label="回到最近" onClick={openTimeline} />
             <div className="detail-heading">
               <span className="detail-glyph" aria-hidden="true">
-                {branchFor(selectedRecord.state)?.icon}
+                {selectedActivity ? <Footprints size={20} /> : branchFor(selectedRecord.state)?.icon}
               </span>
               <p>{fullDateLabel(selectedRecord.occurredAt)}</p>
-              <h2>{branchFor(selectedRecord.state)?.memoryLabel}</h2>
+              <h2>{selectedActivity ? "记下了一次运动" : branchFor(selectedRecord.state)?.memoryLabel}</h2>
             </div>
             {selectedAttachment && (
               <figure className="detail-photo">
@@ -941,11 +1061,23 @@ export default function Home() {
               </figure>
             )}
             <div className="detail-blocks motion-detail-blocks editorial-sections">
-              {selectedRecord.userText && (
-                <section><span>你当时说</span><p>“{selectedRecord.userText}”</p></section>
+              {selectedActivity ? (
+                <>
+                  <section><span>这次记了</span><p>{formatActivitySummary(selectedActivity)}</p></section>
+                  {selectedActivity.note && (
+                    <section><span>还留了一句</span><p>“{selectedActivity.note}”</p></section>
+                  )}
+                  <section><span>这里想说</span><p>{selectedRecord.responseText}</p></section>
+                </>
+              ) : (
+                <>
+                  {selectedRecord.userText && (
+                    <section><span>你当时说</span><p>“{selectedRecord.userText}”</p></section>
+                  )}
+                  <section><span>你希望</span><p>{intentLabel(selectedRecord.state, selectedRecord.intentId)}</p></section>
+                  <section><span>这里回应了</span><p>{selectedRecord.responseText}</p></section>
+                </>
               )}
-              <section><span>你希望</span><p>{intentLabel(selectedRecord.state, selectedRecord.intentId)}</p></section>
-              <section><span>这里回应了</span><p>{selectedRecord.responseText}</p></section>
             </div>
             {storageError && <div className="inline-notice" role="status">{storageError}</div>}
             <section className="delete-zone">
@@ -973,7 +1105,7 @@ export default function Home() {
             <div className="data-heading">
               <p className="soft-kicker"><ShieldCheck size={14} />控制权在你手里</p>
               <h2>本机数据</h2>
-              <p>阶段 2 仍然没有账户，也没有云端副本。</p>
+              <p>这里仍然没有账户，也没有云端副本。</p>
             </div>
             <section className="data-card local-data-card motion-data-card data-row data-row-info">
               <span className="data-card-icon"><Database size={20} /></span>
@@ -981,7 +1113,7 @@ export default function Home() {
             </section>
             <section className="data-card motion-data-card data-row data-row-action">
               <span className="data-card-icon"><FileText size={20} /></span>
-              <div><h3>导出一份副本</h3><p>{attachments.length ? "当前生成记录与照片索引；完整照片归档将在下一切片加入。" : "生成 JSON 文件，不会删除或上传原记录。"}</p></div>
+              <div><h3>导出一份副本</h3><p>{attachments.length ? "生成记录、运动详情与照片索引；照片文件仍留在本机。" : "生成包含运动详情的 JSON 文件，不会删除或上传原记录。"}</p></div>
               <button className="secondary-button" disabled={isExporting} onClick={() => void exportData()} type="button">
                 <Download size={17} aria-hidden="true" />{isExporting ? "正在生成…" : "导出数据"}
               </button>

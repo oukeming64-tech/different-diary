@@ -1,6 +1,7 @@
 import Dexie, { type DexieOptions, type Table } from "dexie";
 
 import {
+  type ActivityRecordV1,
   CHECK_IN_STATES,
   type CheckInV1,
   type CreateCheckInInput,
@@ -14,6 +15,7 @@ import {
   Stage1StorageError,
   STAGE1_SCHEMA_VERSION,
   STAGE2_SCHEMA_VERSION,
+  STAGE3_SCHEMA_VERSION,
   toStage1StorageError,
 } from "./types";
 import { createStableUuid } from "./uuid";
@@ -32,6 +34,12 @@ const STAGE2_STORES = {
     "&id, checkInId, localUserId, createdAt, [localUserId+createdAt]",
 } as const;
 
+const STAGE3_STORES = {
+  ...STAGE2_STORES,
+  activity_records:
+    "&id, checkInId, localUserId, createdAt, [localUserId+createdAt], category",
+} as const;
+
 export type CreateStage1DatabaseOptions = {
   name?: string;
   indexedDB?: DexieOptions["indexedDB"];
@@ -42,6 +50,7 @@ export class Stage1Database extends Dexie {
   readonly localUsers: Table<LocalUserV1, string>;
   readonly checkIns: Table<CheckInV1, string>;
   readonly attachments: Table<LocalImageAttachmentV1, string>;
+  readonly activities: Table<ActivityRecordV1, string>;
 
   constructor(name: string, options: DexieOptions) {
     super(name, options);
@@ -54,9 +63,18 @@ export class Stage1Database extends Dexie {
           .toCollection()
           .modify({ schemaVersion: CURRENT_LOCAL_SCHEMA_VERSION });
       });
+    this.version(STAGE3_SCHEMA_VERSION)
+      .stores(STAGE3_STORES)
+      .upgrade(async (transaction) => {
+        await transaction
+          .table<LocalUserV1>("local_users")
+          .toCollection()
+          .modify({ schemaVersion: CURRENT_LOCAL_SCHEMA_VERSION });
+      });
     this.localUsers = this.table<LocalUserV1, string>("local_users");
     this.checkIns = this.table<CheckInV1, string>("check_ins");
     this.attachments = this.table<LocalImageAttachmentV1, string>("attachments");
+    this.activities = this.table<ActivityRecordV1, string>("activity_records");
   }
 }
 
@@ -370,12 +388,14 @@ export async function deleteCheckIn(
       "rw",
       database.checkIns,
       database.attachments,
+      database.activities,
       async () => {
         const record = await database.checkIns.get(id);
         if (!record) {
           return false;
         }
         await database.attachments.where("checkInId").equals(id).delete();
+        await database.activities.where("checkInId").equals(id).delete();
         await database.checkIns.delete(id);
         return true;
       },
@@ -392,10 +412,12 @@ export async function clearStage1Data(
     await database.transaction(
       "rw",
       database.attachments,
+      database.activities,
       database.checkIns,
       database.localUsers,
       async () => {
         await database.attachments.clear();
+        await database.activities.clear();
         await database.checkIns.clear();
         await database.localUsers.clear();
       },

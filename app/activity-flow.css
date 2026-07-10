@@ -1,0 +1,237 @@
+.activity-screen {
+  --activity-ink: var(--c-ink, #3f342d);
+  --activity-muted: var(--c-muted, #82756a);
+  --activity-line: var(--editorial-line, rgba(93, 68, 50, 0.1));
+  --activity-line-strong: var(--editorial-line-strong, rgba(93, 68, 50, 0.18));
+  background:
+    radial-gradient(circle at 88% 4%, rgba(102, 137, 116, 0.14), transparent 18rem),
+    rgba(252, 248, 241, 0.34);
+  color: var(--activity-ink);
+}
+
+.activity-backbar {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.activity-backbar > span {
+  color: var(--activity-muted);
+  font-size: 0.72rem;
+}
+
+.activity-form {
+  display: grid;
+  gap: 1.55rem;
+  padding-block: 1.8rem 2rem;
+}
+
+.activity-heading {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.activity-mark {
+  align-items: center;
+  color: #668071;
+  display: inline-flex;
+  height: 2.5rem;
+}
+
+.activity-heading p,
+.activity-heading h2,
+.activity-heading > span,
+.activity-fieldset,
+.activity-fieldset p,
+.activity-note,
+.activity-note > span {
+  margin: 0;
+}
+
+.activity-heading p {
+  color: #668071;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.activity-heading h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 9vw, 2.5rem);
+  font-weight: 620;
+  letter-spacing: -0.045em;
+  line-height: 1.15;
+}
+
+.activity-heading > span {
+  color: var(--activity-muted);
+  font-size: 0.88rem;
+  line-height: 1.7;
+}
+
+.activity-fieldset {
+  border: 0;
+  border-top: 1px solid var(--activity-line-strong);
+  min-width: 0;
+  padding: 1rem 0 0;
+}
+
+.activity-fieldset legend {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 650;
+  padding: 0;
+}
+
+.activity-fieldset > p {
+  color: var(--activity-muted);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  padding-top: 0.3rem;
+}
+
+.activity-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.9rem;
+}
+
+.activity-categories button {
+  background: rgba(255, 250, 244, 0.56);
+  border: 1px solid rgba(93, 68, 50, 0.14);
+  border-radius: 999px;
+  color: var(--activity-ink);
+  min-block-size: 2.75rem;
+  padding: 0.55rem 0.82rem;
+}
+
+.activity-categories button.is-selected {
+  background: #6f8376;
+  border-color: #6f8376;
+  color: #fffaf4;
+}
+
+.activity-custom-label,
+.activity-note {
+  display: grid;
+  gap: 0.55rem;
+  padding-top: 1rem;
+}
+
+.activity-custom-label > span,
+.activity-note > span,
+.activity-number-grid label > span:first-child {
+  color: var(--activity-muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+.activity-custom-label input,
+.activity-input-with-unit,
+.activity-note textarea {
+  background: rgba(255, 250, 244, 0.62);
+  border: 1px solid rgba(93, 68, 50, 0.15);
+  border-radius: 0.25rem;
+  color: var(--activity-ink);
+}
+
+.activity-custom-label input {
+  min-block-size: 3rem;
+  padding: 0.7rem 0.8rem;
+}
+
+.activity-number-grid {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding-top: 0.9rem;
+}
+
+.activity-number-grid label {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.activity-input-with-unit {
+  align-items: baseline;
+  display: flex;
+  min-width: 0;
+  padding: 0.58rem 0.55rem;
+}
+
+.activity-input-with-unit input {
+  appearance: textfield;
+  background: transparent;
+  border: 0;
+  color: var(--activity-ink);
+  font: inherit;
+  min-width: 0;
+  outline: 0;
+  width: 100%;
+}
+
+.activity-input-with-unit input::-webkit-inner-spin-button,
+.activity-input-with-unit input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.activity-input-with-unit small {
+  color: var(--activity-muted);
+  flex: 0 0 auto;
+  font-size: 0.66rem;
+}
+
+.activity-note {
+  border-top: 1px solid var(--activity-line-strong);
+}
+
+.activity-note > span small {
+  font-weight: 400;
+}
+
+.activity-note textarea {
+  min-block-size: 6.75rem;
+  padding: 0.8rem;
+  resize: vertical;
+}
+
+.activity-error {
+  background: linear-gradient(90deg, rgba(169, 101, 71, 0.1), transparent 88%);
+  border-left: 2px solid #79513e;
+  color: #79513e;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+}
+
+.activity-actions {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.activity-screen input:focus-visible,
+.activity-screen textarea:focus-visible,
+.activity-screen button:focus-visible {
+  outline: 3px solid rgba(95, 126, 105, 0.25);
+  outline-offset: 2px;
+}
+
+@media (max-width: 370px) {
+  .activity-number-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activity-screen *,
+  .activity-screen *::before,
+  .activity-screen *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
