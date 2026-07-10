@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./motion.css";
+import "./editorial.css";
 import { PwaRegister } from "./pwa-register";
 
 export const metadata: Metadata = {

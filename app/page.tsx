@@ -20,7 +20,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   AmbientScene,
@@ -193,6 +193,7 @@ function fullDateLabel(value: string) {
 }
 
 export default function Home() {
+  const surfaceRef = useRef<HTMLElement>(null);
   const [view, setView] = useState<View>("home");
   const [activeBranchId, setActiveBranchId] =
     useState<CheckInState | null>(null);
@@ -257,6 +258,10 @@ export default function Home() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (surfaceRef.current) surfaceRef.current.scrollTop = 0;
+  }, [view]);
 
   function resetConversation() {
     setActiveBranchId(null);
@@ -417,6 +422,7 @@ export default function Home() {
         data-tone={tone}
         data-view={view}
         aria-live="polite"
+        ref={surfaceRef}
       >
         {view === "home" && (
           <div className="screen home-screen screen-enter motion-home">
@@ -451,32 +457,36 @@ export default function Home() {
               </div>
             )}
 
-            <div className="state-grid" aria-label="四个核心入口">
+            <ol className="state-grid state-index" aria-label="四个核心入口">
               {branches.map((branch, index) => (
-                <button
-                  className="state-card motion-state-card"
-                  data-tone={branch.id}
-                  data-testid={`branch-${branch.id}`}
-                  key={branch.id}
-                  onClick={() => openBranch(branch.id)}
-                  style={{ "--motion-delay": `${index * 90}ms` } as React.CSSProperties}
-                  type="button"
-                >
-                  <span className="state-card-top">
-                    <span className="state-glyph" aria-hidden="true">
-                      {branch.icon}
+                <li className="state-index-item" key={branch.id}>
+                  <button
+                    className="state-card motion-state-card state-entry"
+                    data-tone={branch.id}
+                    data-testid={`branch-${branch.id}`}
+                    onClick={() => openBranch(branch.id)}
+                    style={{ "--motion-delay": `${index * 90}ms` } as React.CSSProperties}
+                    type="button"
+                  >
+                    <span className="state-index-number" aria-hidden="true">
+                      {String(index + 1).padStart(2, "0")}
                     </span>
-                    <ArrowUpRight size={18} aria-hidden="true" />
-                  </span>
-                  <span className="state-card-copy">
-                    <strong>{branch.label}</strong>
-                    <small>{branch.hint}</small>
-                  </span>
-                </button>
+                    <span className="state-card-top">
+                      <span className="state-glyph" aria-hidden="true">
+                        {branch.icon}
+                      </span>
+                      <ArrowUpRight size={18} aria-hidden="true" />
+                    </span>
+                    <span className="state-card-copy">
+                      <strong>{branch.label}</strong>
+                      <small>{branch.hint}</small>
+                    </span>
+                  </button>
+                </li>
               ))}
-            </div>
+            </ol>
 
-            <button className="recent-link motion-rise" onClick={openTimeline} type="button">
+            <button className="recent-link motion-rise utility-row" onClick={openTimeline} type="button">
               <span className="recent-link-icon" aria-hidden="true">
                 <History size={18} />
               </span>
@@ -504,26 +514,27 @@ export default function Home() {
               <p>{activeBranch.eyebrow}</p>
               <h2>{activeBranch.shortLabel}</h2>
             </div>
-            <div className="response-paper motion-response">
+            <div className="response-paper motion-response editorial-quote">
               <span>先听我说</span>
               <p>{activeBranch.response}</p>
             </div>
             <div className="choice-section">
               <p className="section-label">现在更希望我怎么陪你？</p>
-              <div className="choice-list">
+              <ul className="choice-list hairline-list">
                 {activeBranch.options.map((option, index) => (
-                  <button
-                    className="choice-row motion-choice"
-                    key={option.id}
-                    onClick={() => chooseIntent(option.id)}
-                    style={{ "--motion-delay": `${180 + index * 55}ms` } as React.CSSProperties}
-                    type="button"
-                  >
-                    <span>{option.label}</span>
-                    <ArrowRight size={17} aria-hidden="true" />
-                  </button>
+                  <li className="hairline-list-item" key={option.id}>
+                    <button
+                      className="choice-row motion-choice hairline-row"
+                      onClick={() => chooseIntent(option.id)}
+                      style={{ "--motion-delay": `${180 + index * 55}ms` } as React.CSSProperties}
+                      type="button"
+                    >
+                      <span>{option.label}</span>
+                      <ArrowRight size={17} aria-hidden="true" />
+                    </button>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
             <button className="quiet-action" onClick={goHome} type="button">
               现在什么也不想选
@@ -539,7 +550,7 @@ export default function Home() {
             </div>
             <p className="soft-kicker centered">好，就按你说的来</p>
             <h2>{intentLabel(activeBranch.id, selectedIntentId ?? "")}</h2>
-            <div className="final-reply motion-response">
+            <div className="final-reply motion-response editorial-quote">
               <p>{currentResponse.text}</p>
             </div>
 
@@ -549,9 +560,9 @@ export default function Home() {
               </div>
             )}
 
-            <div className="memory-actions motion-actions">
+            <div className="memory-actions motion-actions hairline-actions">
               <button
-                className="memory-action-card"
+                className="memory-action-card hairline-row"
                 disabled={isSaving}
                 onClick={() => void remember(null)}
                 type="button"
@@ -561,7 +572,7 @@ export default function Home() {
                 <ChevronRight size={17} aria-hidden="true" />
               </button>
               <button
-                className="memory-action-card"
+                className="memory-action-card hairline-row"
                 onClick={() => setView("write")}
                 type="button"
               >
@@ -682,7 +693,7 @@ export default function Home() {
             {dataNotice && <div className="calm-notice" role="status">{dataNotice}</div>}
 
             {records.length === 0 ? (
-              <div className="empty-memory">
+              <div className="empty-memory editorial-empty">
                 <span className="empty-dot" aria-hidden="true" />
                 <h3>这里还没有记录</h3>
                 <p>你可以先去首页坐一会儿，也可以什么都不做。</p>
@@ -695,35 +706,36 @@ export default function Home() {
                 {groupedRecords.map((group) => (
                   <section className="memory-group" key={group.key}>
                     <h3>{group.label}</h3>
-                    <div className="memory-stack">
+                    <ol className="memory-stack memory-ledger">
                       {group.records.map((record, recordIndex) => {
                         const branch = branchFor(record.state);
                         return (
-                          <button
-                            className="memory-card motion-memory-card"
-                            data-tone={record.state}
-                            key={record.id}
-                            onClick={() => openRecord(record.id)}
-                            style={{ "--motion-delay": `${recordIndex * 70}ms` } as React.CSSProperties}
-                            type="button"
-                          >
-                            <span className="memory-dot" aria-hidden="true" />
-                            <span className="memory-card-body">
-                              <span className="memory-meta">
-                                <Clock3 size={13} aria-hidden="true" />
-                                {timeLabel(record.occurredAt)} · {branch?.memoryLabel}
+                          <li className="memory-ledger-item" key={record.id}>
+                            <button
+                              className="memory-card motion-memory-card ledger-entry"
+                              data-tone={record.state}
+                              onClick={() => openRecord(record.id)}
+                              style={{ "--motion-delay": `${recordIndex * 70}ms` } as React.CSSProperties}
+                              type="button"
+                            >
+                              <span className="memory-dot" aria-hidden="true" />
+                              <span className="memory-card-body">
+                                <time className="memory-meta" dateTime={record.occurredAt}>
+                                  <Clock3 size={13} aria-hidden="true" />
+                                  {timeLabel(record.occurredAt)} · {branch?.memoryLabel}
+                                </time>
+                                {record.userText && <strong>“{record.userText}”</strong>}
+                                <span className="memory-intent">
+                                  {intentLabel(record.state, record.intentId)}
+                                </span>
+                                <small>{record.responseText}</small>
                               </span>
-                              {record.userText && <strong>“{record.userText}”</strong>}
-                              <span className="memory-intent">
-                                {intentLabel(record.state, record.intentId)}
-                              </span>
-                              <small>{record.responseText}</small>
-                            </span>
-                            <ChevronRight size={17} aria-hidden="true" />
-                          </button>
+                              <ChevronRight size={17} aria-hidden="true" />
+                            </button>
+                          </li>
                         );
                       })}
-                    </div>
+                    </ol>
                   </section>
                 ))}
               </div>
@@ -741,7 +753,7 @@ export default function Home() {
               <p>{fullDateLabel(selectedRecord.occurredAt)}</p>
               <h2>{branchFor(selectedRecord.state)?.memoryLabel}</h2>
             </div>
-            <div className="detail-blocks motion-detail-blocks">
+            <div className="detail-blocks motion-detail-blocks editorial-sections">
               {selectedRecord.userText && (
                 <section><span>你当时说</span><p>“{selectedRecord.userText}”</p></section>
               )}
@@ -776,11 +788,11 @@ export default function Home() {
               <h2>本机数据</h2>
               <p>阶段 1 没有账户，也没有云端副本。</p>
             </div>
-            <section className="data-card local-data-card motion-data-card">
+            <section className="data-card local-data-card motion-data-card data-row data-row-info">
               <span className="data-card-icon"><Database size={20} /></span>
               <div><h3>只在当前设备</h3><p>身份和记录保存在浏览器的本机空间里。</p></div>
             </section>
-            <section className="data-card motion-data-card">
+            <section className="data-card motion-data-card data-row data-row-action">
               <span className="data-card-icon"><FileText size={20} /></span>
               <div><h3>导出一份副本</h3><p>生成 JSON 文件，不会删除或上传原记录。</p></div>
               <button className="secondary-button" disabled={isExporting} onClick={() => void exportData()} type="button">
@@ -788,7 +800,7 @@ export default function Home() {
               </button>
             </section>
             {dataNotice && <div className="calm-notice" role="status">{dataNotice}</div>}
-            <section className="data-card danger-card motion-data-card">
+            <section className="data-card danger-card motion-data-card data-row data-row-danger">
               <span className="data-card-icon"><Trash2 size={20} /></span>
               <div><h3>清空这台设备</h3><p>会删除本机身份和全部记录，无法撤销。</p></div>
               {!confirmClear ? (
