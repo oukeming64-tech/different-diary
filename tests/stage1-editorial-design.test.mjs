@@ -91,31 +91,57 @@ test("loads the editorial override after the base and motion layers", async () =
   );
 });
 
-test("turns the four home choices into ordered editorial entries", async () => {
+test("keeps four single-click entries without ordinal or repeated card chrome", async () => {
   const page = await read("app/page.tsx");
+  const entryLabels = [
+    "我想吃点东西",
+    "我今天不想练",
+    "我刚练完，很累",
+    "没什么，只是来坐坐",
+  ];
 
   assert.ok(
     /className=["'][^"']*\bstate-entry\b[^"']*["']/.test(page),
     "home choices must use the state-entry class",
   );
-  assert.ok(
-    /className=["'][^"']*\bstate-index\b[^"']*["']/.test(page),
-    "home choices must render a state-index",
+  for (const label of entryLabels) assert.match(page, new RegExp(label));
+  assert.match(
+    page,
+    /branches\.map\(\s*\(\s*branch(?:\s*,\s*index)?\s*\)\s*=>[\s\S]*?<button[\s\S]*?onClick=\{\(\)\s*=>\s*openBranch\(branch\.id\)\}/,
+    "each branch entry must remain a directly clickable button",
   );
-  const hasLiteralNumbers = ["01", "02", "03", "04"].every((number) =>
-    new RegExp(`["']${number}["']`).test(page),
+  assert.doesNotMatch(
+    page,
+    /\bstateOrdinals\b|\bstate-index-number\b/,
+    "the four entries should not be presented as an ordinal directory",
   );
-  const hasGeneratedNumbers =
-    /String\(\s*index\s*\+\s*1\s*\)\.padStart\(\s*2\s*,\s*["']0["']\s*\)/.test(
-      page,
-    );
-  const hasWarmOrdinals =
-    /stateOrdinals\s*=\s*\[\s*["']一["']\s*,\s*["']二["']\s*,\s*["']三["']\s*,\s*["']四["']\s*\]/s.test(
-      page,
-    ) && /\{stateOrdinals\[index\]\}/.test(page);
-  assert.ok(
-    hasLiteralNumbers || hasGeneratedNumbers || hasWarmOrdinals,
-    "the four entries must visibly resolve to an intentional ordered sequence",
+  assert.doesNotMatch(
+    page,
+    /\bArrowUpRight\b/,
+    "the entries should not repeat the same diagonal arrow ornament",
+  );
+  assert.doesNotMatch(
+    page,
+    /<small>\s*\{branch\.hint\}\s*<\/small>/,
+    "the entries should not repeat a subtitle hint under every label",
+  );
+});
+
+test("keeps the experience inside one main surface with fine separators", async () => {
+  const [page, editorial] = await Promise.all([
+    read("app/page.tsx"),
+    readOptional("app/editorial.css"),
+  ]);
+  const mainSurfaces = page.match(
+    /className=["'][^"']*\bapp-surface\b[^"']*["']/g,
+  ) ?? [];
+
+  assert.equal(mainSurfaces.length, 1, "the app should have one shared main surface");
+  assert.match(page, /\bhairline(?:-[a-z][\w-]*)?\b/i);
+  assert.match(
+    editorial,
+    /(?:1px|0\.0625rem)[^{};]*(?:editorial-line|linear-gradient)|(?:editorial-line|linear-gradient)[^{};]*(?:1px|0\.0625rem)/i,
+    "the shared surface needs a subtle one-pixel separator rhythm",
   );
 });
 

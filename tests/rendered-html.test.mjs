@@ -31,7 +31,8 @@ test("server-renders the stage 1 local-first home", async () => {
   const html = await response.text();
   assert.match(html, /<html lang="zh-CN">/i);
   assert.match(html, /<title>减肥拍拍乐｜先接住你，再说别的<\/title>/i);
-  assert.match(html, /你现在需要什么？/);
+  assert.match(html, /此刻，/);
+  assert.match(html, /你更像哪一句？/);
   assert.match(html, /我想吃点东西/);
   assert.match(html, /我今天不想练/);
   assert.match(html, /我刚练完，很累/);

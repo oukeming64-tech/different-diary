@@ -73,6 +73,16 @@ body {
     0 0 0 1px rgba(255, 255, 255, 0.48) inset;
 }
 
+.motion-surface[data-view="home"] {
+  backdrop-filter: blur(3px) saturate(0.96);
+  background: linear-gradient(
+    180deg,
+    rgba(248, 239, 233, 0.58),
+    rgba(247, 242, 234, 0.64) 46%,
+    rgba(242, 238, 229, 0.56)
+  );
+}
+
 .app-surface {
   border-radius: var(--r-shell);
 }
@@ -125,6 +135,14 @@ body {
   line-height: 1.14;
 }
 
+.soft-kicker-mark {
+  background: #8b7566;
+  border-radius: 999px;
+  display: inline-block;
+  height: 1px;
+  width: 1rem;
+}
+
 .state-index,
 .hairline-list,
 .memory-ledger {
@@ -133,20 +151,51 @@ body {
   padding: 0;
 }
 
+.motion-home {
+  background:
+    radial-gradient(circle at 92% 21%, rgba(120, 156, 136, 0.15), transparent 16rem),
+    radial-gradient(circle at -8% 55%, rgba(225, 174, 136, 0.1), transparent 18rem),
+    rgba(252, 248, 241, 0.16);
+}
+
+.state-panel {
+  background:
+    linear-gradient(145deg, rgba(255, 252, 247, 0.8), rgba(235, 244, 238, 0.64)),
+    rgba(252, 248, 241, 0.62);
+  backdrop-filter: blur(14px) saturate(0.94);
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  border-radius: 0.75rem;
+  box-shadow:
+    0 1rem 2.8rem rgba(75, 56, 43, 0.07),
+    0 1px 0 rgba(255, 255, 255, 0.72) inset;
+  overflow: hidden;
+  position: relative;
+}
+
+.state-panel::before {
+  background: radial-gradient(circle, rgba(132, 169, 148, 0.16), transparent 69%);
+  border-radius: 50%;
+  content: "";
+  height: 13rem;
+  pointer-events: none;
+  position: absolute;
+  right: -5rem;
+  top: -6rem;
+  width: 13rem;
+}
+
 .state-index {
   border-block: 0;
   display: block;
+  position: relative;
+}
+
+.state-index-item {
+  position: relative;
 }
 
 .state-index-item + .state-index-item {
-  background: linear-gradient(
-    90deg,
-    transparent 0,
-    transparent 2.8rem,
-    var(--editorial-line-strong) 2.8rem,
-    var(--editorial-line) 78%,
-    transparent 100%
-  ) top / 100% 1px no-repeat;
+  border-top: 1px solid rgba(93, 68, 50, 0.09);
 }
 
 .state-entry {
@@ -156,104 +205,73 @@ body {
   border-radius: 0;
   box-shadow: none;
   display: grid;
-  gap: 0.25rem 0.75rem;
-  grid-template-columns: 2.2rem minmax(0, 1fr) auto;
-  grid-template-rows: auto auto;
-  min-block-size: 5.8rem;
+  gap: 0.75rem;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  min-block-size: 4.6rem;
   overflow: hidden;
-  padding: 1.05rem 0.2rem;
+  padding: 0.85rem 1rem;
+  position: relative;
   width: 100%;
 }
 
 .state-entry::before {
   animation: none;
-  background: linear-gradient(90deg, var(--tone-wash), transparent 88%);
+  background: linear-gradient(90deg, rgba(111, 143, 124, 0.11), transparent 82%);
   content: "";
   inset: 0;
-  opacity: 0.2;
+  opacity: 0;
   position: absolute;
-  transform: scaleX(1);
+  transform: scaleX(0.76);
   transform-origin: left center;
-  transition: transform 420ms var(--motion-ease-settle);
+  transition:
+    opacity 180ms ease,
+    transform 360ms var(--motion-ease-settle);
 }
 
 .state-entry::after {
-  background: var(--tone-accent);
-  border: 0;
-  border-radius: 999px;
-  bottom: calc(50% - 1.05rem);
-  content: "";
-  left: 0;
-  position: absolute;
-  top: calc(50% - 1.05rem);
-  width: 3px;
+  content: none;
 }
 
 .state-entry:hover::before,
 .state-entry:focus-visible::before {
-  opacity: 0.36;
+  opacity: 1;
+  transform: scaleX(1);
 }
 
 .state-entry:active::before {
-  opacity: 0.44;
+  opacity: 1;
+  transform: scaleX(0.94);
 }
 
-.state-index-number,
-.state-entry .state-card-top,
+.state-life-symbol,
 .state-entry .state-card-copy {
   position: relative;
   z-index: 1;
 }
 
-.state-index-number {
-  align-self: start;
-  color: color-mix(in srgb, var(--tone-accent) 82%, var(--c-ink));
-  font-family: var(--font-emotion);
-  font-size: 0.8125rem;
-  font-weight: 600;
+.state-life-symbol {
+  align-items: center;
+  align-self: center;
+  color: #668071;
+  display: inline-flex;
   grid-column: 1;
-  grid-row: 1 / 3;
-  letter-spacing: 0;
-  padding-left: 0.45rem;
-  padding-top: 0.2rem;
+  height: 2.5rem;
+  justify-content: center;
+  width: 2.5rem;
 }
 
 .state-entry .state-card-copy {
-  gap: 0.28rem;
+  align-self: center;
   grid-column: 2;
-  grid-row: 1 / 3;
   margin: 0;
 }
 
 .state-entry .state-card-copy strong {
   font-family: var(--font-display);
-  font-size: 1.12rem;
-  font-weight: 620;
-  letter-spacing: -0.025em;
-}
-
-.state-entry .state-card-copy small {
-  font-size: 0.75rem;
-}
-
-.state-entry .state-card-top {
-  align-items: center;
-  align-self: center;
-  color: color-mix(in srgb, var(--tone-accent) 78%, var(--editorial-ink));
-  gap: 0;
-  grid-column: 3;
-  grid-row: 1 / 3;
-}
-
-.state-entry .state-glyph {
-  animation: none;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  font-size: 0.75rem;
-  height: auto;
-  width: auto;
+  font-size: 1.0625rem;
+  font-weight: 640;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
 }
 
 .recent-link {
@@ -275,6 +293,21 @@ body {
   backdrop-filter: none;
   margin-top: 1.1rem;
   padding: 0.9rem 0.2rem;
+}
+
+.home-tools {
+  backdrop-filter: blur(8px) saturate(0.92);
+  background: rgba(250, 247, 241, 0.34);
+  border-block: 1px solid var(--editorial-line);
+  margin-top: 1.25rem;
+}
+
+.home-tools .utility-row {
+  margin-top: 0;
+}
+
+.home-tools .utility-row + .utility-row {
+  border-top: 1px solid var(--editorial-line);
 }
 
 .utility-row:hover {
@@ -613,19 +646,6 @@ body {
   opacity: 0.16;
 }
 
-.ambient-scene__orbit {
-  opacity: 0.18;
-}
-
-.ambient-scene__orbit-line {
-  border-color: rgba(93, 68, 50, 0.08);
-  box-shadow: none;
-}
-
-.ambient-scene__orbit-line::after {
-  border-color: rgba(119, 106, 131, 0.06);
-}
-
 .home-screen.screen-enter .state-entry {
   --card-enter-x: 0;
   --card-enter-tilt: 0deg;
@@ -672,7 +692,7 @@ body {
   }
 
   .state-entry {
-    min-block-size: 5.45rem;
+    min-block-size: 4.5rem;
   }
 
   .home-intro {
@@ -714,12 +734,13 @@ body {
 
 @media (max-width: 370px) {
   .state-entry {
-    gap: 0.2rem 0.55rem;
-    grid-template-columns: 1.9rem minmax(0, 1fr) auto;
+    gap: 0.55rem;
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    padding-inline: 0.8rem;
   }
 
   .state-entry .state-card-copy strong {
-    font-size: 1.02rem;
+    font-size: 1rem;
   }
 
   .memory-card--photo {

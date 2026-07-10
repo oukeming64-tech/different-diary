@@ -11,15 +11,6 @@ export type AmbientSceneProps = {
   className?: string;
 };
 
-const TONE_STATUS: Record<AmbientSceneTone, string> = {
-  home: "慢慢来",
-  food: "想吃也没关系",
-  rest: "允许休息",
-  tired: "先喘口气",
-  sit: "安静坐会儿",
-  memory: "只替你记住",
-};
-
 /**
  * Decorative, data-free backdrop for the stage 1 screens.
  *
@@ -46,40 +37,59 @@ export function AmbientScene({
       data-tone={tone}
       style={{ pointerEvents: "none", userSelect: "none" }}
     >
-      <div className="ambient-scene__auroras">
-        <span className="ambient-scene__aurora ambient-scene__aurora--food" />
-        <span className="ambient-scene__aurora ambient-scene__aurora--rest" />
-        <span className="ambient-scene__aurora ambient-scene__aurora--tired" />
-        <span className="ambient-scene__aurora ambient-scene__aurora--sit" />
+      <div className="ambient-scene__sky">
+        <span className="ambient-scene__evening-light" />
       </div>
 
-      <div className="ambient-scene__haze ambient-scene__haze--near" />
-      <div className="ambient-scene__haze ambient-scene__haze--far" />
+      <div className="ambient-scene__mist ambient-scene__mist--sky" />
 
-      <div className="ambient-scene__orbit ambient-scene__orbit--wide">
-        <span className="ambient-scene__orbit-line" />
-        <span className="ambient-scene__light ambient-scene__light--one" />
-        <span className="ambient-scene__light ambient-scene__light--two" />
+      <div className="ambient-scene__mountains">
+        <span className="ambient-scene__ridge ambient-scene__ridge--far" />
+        <span className="ambient-scene__ridge ambient-scene__ridge--middle" />
+        <span className="ambient-scene__ridge ambient-scene__ridge--near" />
       </div>
 
-      <div className="ambient-scene__orbit ambient-scene__orbit--close">
-        <span className="ambient-scene__orbit-line" />
-        <span className="ambient-scene__light ambient-scene__light--three" />
+      <div className="ambient-scene__water">
+        <span className="ambient-scene__water-line ambient-scene__water-line--one" />
+        <span className="ambient-scene__water-line ambient-scene__water-line--two" />
+        <span className="ambient-scene__water-line ambient-scene__water-line--three" />
+        <span className="ambient-scene__water-line ambient-scene__water-line--four" />
+        <span className="ambient-scene__chair-reflection" />
       </div>
 
-      <div className="ambient-scene__dust" aria-hidden="true">
-        <span className="ambient-scene__mote ambient-scene__mote--one" />
-        <span className="ambient-scene__mote ambient-scene__mote--two" />
-        <span className="ambient-scene__mote ambient-scene__mote--three" />
-        <span className="ambient-scene__mote ambient-scene__mote--four" />
-        <span className="ambient-scene__mote ambient-scene__mote--five" />
+      <div className="ambient-scene__mist ambient-scene__mist--water" />
+
+      <div className="ambient-scene__chair">
+        <span className="ambient-scene__chair-shadow" />
+        <span className="ambient-scene__chair-back">
+          <i />
+          <i />
+          <i />
+        </span>
+        <span className="ambient-scene__chair-seat" />
+        <span className="ambient-scene__chair-leg ambient-scene__chair-leg--left" />
+        <span className="ambient-scene__chair-leg ambient-scene__chair-leg--right" />
+        <span className="ambient-scene__chair-brace" />
       </div>
 
-      <div className="ambient-scene__signal">
-        <span className="ambient-scene__signal-ring" />
-        <span className="ambient-scene__signal-mark">啪</span>
-        <span className="ambient-scene__signal-copy">{TONE_STATUS[tone]}</span>
+      <div className="ambient-scene__bank ambient-scene__bank--left" />
+      <div className="ambient-scene__bank ambient-scene__bank--right" />
+
+      <div className="ambient-scene__reeds ambient-scene__reeds--left">
+        <span className="ambient-scene__reed ambient-scene__reed--one" />
+        <span className="ambient-scene__reed ambient-scene__reed--two" />
+        <span className="ambient-scene__reed ambient-scene__reed--three" />
+        <span className="ambient-scene__reed ambient-scene__reed--four" />
+        <span className="ambient-scene__reed ambient-scene__reed--five" />
       </div>
+
+      <div className="ambient-scene__reeds ambient-scene__reeds--right">
+        <span className="ambient-scene__reed ambient-scene__reed--six" />
+        <span className="ambient-scene__reed ambient-scene__reed--seven" />
+        <span className="ambient-scene__reed ambient-scene__reed--eight" />
+      </div>
+
+      <div className="ambient-scene__depth-veil" />
     </div>
   );
 }

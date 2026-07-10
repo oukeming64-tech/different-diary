@@ -12,9 +12,9 @@
  *      .motion-still    — skip the page transition for programmatic refreshes
  *    Example: className="screen branch-screen screen-enter motion-forward"
  *
- * Performance boundary: ambient layers are only two CSS pseudo-elements; long
- * motion changes transform/opacity only. Filter values are static. Content
- * animations are short, one-shot, and release their transform after finishing.
+ * Performance boundary: the scenery is built from local CSS shapes. Long
+ * environmental motion changes transform/opacity only. Content animations are
+ * short, one-shot, and release their transform after finishing.
  */
 
 :root {
@@ -30,17 +30,38 @@
 }
 
 /* -------------------------------------------------------------------------- */
-/* Aurora room: a visible atmosphere behind every screen                      */
+/* A quiet lakeside at dusk: concrete scenery behind every screen             */
 /* -------------------------------------------------------------------------- */
 
 .motion-stage {
   background:
-    linear-gradient(145deg, rgba(248, 236, 226, 0.9), rgba(226, 237, 239, 0.86) 48%, rgba(235, 227, 244, 0.88)),
+    linear-gradient(155deg, #c8b7ae, #aeb4b2 48%, #817d78),
     var(--c-canvas);
   isolation: isolate;
 }
 
 .ambient-scene {
+  --scene-sky-top: #c9aaa4;
+  --scene-sky-mid: #bca8a1;
+  --scene-horizon: #a4aaa7;
+  --scene-water: #777f7d;
+  --scene-water-deep: #555d5b;
+  --scene-ridge-far: #9a9994;
+  --scene-ridge-middle: #777d79;
+  --scene-ridge-near: #59615d;
+  --scene-bank: #3e4842;
+  --scene-reed: #4b5048;
+  --scene-mist: rgba(231, 224, 216, 0.58);
+  --scene-chair: #d8aa4d;
+  --scene-chair-dark: #a8762f;
+  background: linear-gradient(
+    to bottom,
+    var(--scene-sky-top),
+    var(--scene-sky-mid) 35%,
+    var(--scene-horizon) 54%,
+    var(--scene-water) 54%,
+    var(--scene-water-deep)
+  );
   contain: paint;
   inset: 0;
   overflow: hidden;
@@ -48,191 +69,463 @@
   z-index: 0;
 }
 
-.ambient-scene__auroras,
-.ambient-scene__haze,
-.ambient-scene__orbit,
-.ambient-scene__dust {
+.ambient-scene[data-tone="food"] {
+  --scene-sky-top: #d2aaa0;
+  --scene-sky-mid: #c4a69e;
+  --scene-horizon: #aaa8a0;
+  --scene-water: #7f8079;
+}
+
+.ambient-scene[data-tone="rest"] {
+  --scene-sky-top: #b4b9bd;
+  --scene-sky-mid: #aeb4b4;
+  --scene-horizon: #9ea9aa;
+  --scene-water: #697a7c;
+  --scene-water-deep: #4f6264;
+}
+
+.ambient-scene[data-tone="tired"] {
+  --scene-sky-top: #b8b4aa;
+  --scene-sky-mid: #aab1aa;
+  --scene-horizon: #96a49d;
+  --scene-water: #687972;
+  --scene-water-deep: #4d6057;
+}
+
+.ambient-scene[data-tone="sit"] {
+  --scene-sky-top: #c1adb7;
+  --scene-sky-mid: #b5a9b0;
+  --scene-horizon: #a19fa3;
+  --scene-water: #74757d;
+  --scene-water-deep: #565760;
+}
+
+.ambient-scene[data-tone="memory"] {
+  --scene-sky-top: #b8b2af;
+  --scene-sky-mid: #aaaead;
+  --scene-horizon: #969f9d;
+  --scene-water: #65716f;
+  --scene-water-deep: #4d5956;
+}
+
+.ambient-scene__sky,
+.ambient-scene__mountains,
+.ambient-scene__water,
+.ambient-scene__mist,
+.ambient-scene__depth-veil {
   inset: 0;
   position: absolute;
 }
 
-.ambient-scene__aurora {
-  border-radius: 50%;
-  filter: blur(64px) saturate(1.12);
-  height: clamp(20rem, 54vmax, 46rem);
-  opacity: 0.28;
+.ambient-scene__sky {
+  background:
+    radial-gradient(
+      ellipse at 68% 34%,
+      rgba(246, 220, 190, 0.28),
+      transparent 27%
+    ),
+    linear-gradient(
+      to bottom,
+      var(--scene-sky-top),
+      var(--scene-sky-mid) 62%,
+      transparent
+    );
+}
+
+.ambient-scene__evening-light {
+  animation: scene-evening-breathe 14s infinite alternate
+    var(--motion-ease-breathe);
+  background: radial-gradient(
+    ellipse,
+    rgba(251, 225, 196, 0.26),
+    rgba(239, 203, 180, 0.08) 48%,
+    transparent 72%
+  );
+  height: 30rem;
   position: absolute;
-  width: clamp(20rem, 54vmax, 46rem);
-  will-change: transform;
+  right: 4%;
+  top: 2%;
+  width: 42rem;
 }
 
-.ambient-scene__aurora--food {
-  animation: ambient-aurora-one 24s infinite alternate var(--motion-ease-breathe);
-  background: rgba(238, 151, 98, 0.46);
-  left: -18%;
-  top: -25%;
+.ambient-scene__mist {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--scene-mist) 26%,
+    rgba(234, 229, 222, 0.34) 62%,
+    transparent
+  );
+  opacity: 0.56;
 }
 
-.ambient-scene__aurora--rest {
-  animation: ambient-aurora-two 29s -8s infinite alternate var(--motion-ease-breathe);
-  background: rgba(99, 171, 205, 0.42);
-  right: -23%;
-  top: 5%;
+.ambient-scene__mist--sky {
+  animation: scene-mist-drift 28s -7s infinite alternate
+    var(--motion-ease-breathe);
+  bottom: auto;
+  height: 15rem;
+  top: 31%;
 }
 
-.ambient-scene__aurora--tired {
-  animation: ambient-aurora-three 27s -13s infinite alternate var(--motion-ease-breathe);
-  background: rgba(100, 168, 122, 0.4);
-  bottom: -32%;
-  left: -14%;
+.ambient-scene__mist--water {
+  animation: scene-mist-drift 34s -19s infinite alternate-reverse
+    var(--motion-ease-breathe);
+  bottom: 16%;
+  height: 12rem;
+  opacity: 0.38;
+  top: auto;
 }
 
-.ambient-scene__aurora--sit {
-  animation: ambient-aurora-four 31s -5s infinite alternate var(--motion-ease-breathe);
-  background: rgba(145, 112, 191, 0.4);
-  bottom: -26%;
-  right: -22%;
+.ambient-scene__ridge {
+  bottom: 43%;
+  clip-path: polygon(
+    0 72%,
+    8% 48%,
+    16% 60%,
+    25% 31%,
+    36% 63%,
+    48% 38%,
+    59% 59%,
+    70% 28%,
+    82% 55%,
+    91% 37%,
+    100% 62%,
+    100% 100%,
+    0 100%
+  );
+  height: 29%;
+  left: -4%;
+  position: absolute;
+  width: 108%;
 }
 
-.ambient-scene[data-tone="food"] .ambient-scene__aurora,
-.ambient-scene[data-tone="rest"] .ambient-scene__aurora,
-.ambient-scene[data-tone="tired"] .ambient-scene__aurora,
-.ambient-scene[data-tone="sit"] .ambient-scene__aurora,
-.ambient-scene[data-tone="memory"] .ambient-scene__aurora {
-  opacity: 0.15;
-}
-
-.ambient-scene[data-tone="food"] .ambient-scene__aurora--food,
-.ambient-scene[data-tone="rest"] .ambient-scene__aurora--rest,
-.ambient-scene[data-tone="tired"] .ambient-scene__aurora--tired,
-.ambient-scene[data-tone="sit"] .ambient-scene__aurora--sit {
-  opacity: 0.48;
-}
-
-.ambient-scene[data-tone="memory"] .ambient-scene__aurora--rest,
-.ambient-scene[data-tone="memory"] .ambient-scene__aurora--tired {
-  opacity: 0.3;
-}
-
-.ambient-scene__haze {
-  border-radius: 50%;
-  filter: blur(26px);
-}
-
-.ambient-scene__haze--near {
-  animation: ambient-haze-breathe 12s infinite alternate var(--motion-ease-breathe);
-  background: radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.62), transparent 58%);
+.ambient-scene__ridge--far {
+  animation: scene-depth-breathe 24s infinite alternate
+    var(--motion-ease-breathe);
+  background: var(--scene-ridge-far);
   opacity: 0.42;
-  transform: scale(0.88);
+  transform: translate3d(-1.2%, 0, 0) scale(1.03);
 }
 
-.ambient-scene__haze--far {
-  animation: ambient-haze-breathe 17s -6s infinite alternate-reverse var(--motion-ease-breathe);
-  background: radial-gradient(circle at 48% 52%, transparent 34%, rgba(255, 255, 255, 0.24) 52%, transparent 72%);
-  opacity: 0.28;
+.ambient-scene__ridge--middle {
+  background: var(--scene-ridge-middle);
+  bottom: 41%;
+  clip-path: polygon(
+    0 76%,
+    11% 58%,
+    23% 68%,
+    34% 45%,
+    47% 72%,
+    61% 51%,
+    73% 65%,
+    86% 42%,
+    100% 67%,
+    100% 100%,
+    0 100%
+  );
+  height: 25%;
+  opacity: 0.52;
 }
 
-.ambient-scene__orbit {
-  border-radius: 50%;
-  height: min(88vmax, 56rem);
-  left: 50%;
-  top: 50%;
-  width: min(88vmax, 56rem);
+.ambient-scene__ridge--near {
+  background: var(--scene-ridge-near);
+  bottom: 39%;
+  clip-path: polygon(
+    0 82%,
+    16% 65%,
+    30% 76%,
+    44% 57%,
+    58% 77%,
+    75% 61%,
+    88% 73%,
+    100% 56%,
+    100% 100%,
+    0 100%
+  );
+  height: 20%;
+  opacity: 0.64;
 }
 
-.ambient-scene__orbit--wide {
-  animation: ambient-orbit-spin 52s linear infinite;
-  transform: translate3d(-50%, -50%, 0) rotate(-14deg);
+.ambient-scene__water {
+  background:
+    linear-gradient(rgba(228, 220, 211, 0.16), transparent 12%),
+    linear-gradient(to bottom, var(--scene-water), var(--scene-water-deep));
+  top: 54%;
 }
 
-.ambient-scene__orbit--close {
-  animation: ambient-orbit-spin-reverse 37s linear infinite;
-  height: min(62vmax, 38rem);
-  width: min(62vmax, 38rem);
-}
-
-.ambient-scene__orbit-line {
-  border: 1px solid rgba(255, 255, 255, 0.34);
-  border-radius: 50%;
-  inset: 0;
+.ambient-scene__water::before {
+  background: rgba(235, 227, 216, 0.24);
+  content: "";
+  height: 1px;
+  left: 0;
   position: absolute;
+  right: 0;
+  top: 0;
 }
 
-.ambient-scene__light {
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
-  box-shadow: 0 0 1.5rem rgba(255, 255, 255, 0.88);
-  height: 0.42rem;
+.ambient-scene__water-line {
+  animation: scene-water-drift 15s infinite alternate
+    var(--motion-ease-breathe);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(226, 219, 209, 0.22),
+    transparent
+  );
+  height: 1px;
+  left: 4%;
+  opacity: 0.5;
   position: absolute;
-  width: 0.42rem;
+  width: 28%;
 }
 
-.ambient-scene__light--one {
-  left: 12%;
-  top: 20%;
+.ambient-scene__water-line--one {
+  animation-delay: -2s;
+  top: 15%;
 }
 
-.ambient-scene__light--two {
-  bottom: 14%;
-  right: 18%;
+.ambient-scene__water-line--two {
+  animation-delay: -8s;
+  left: 58%;
+  top: 29%;
+  width: 37%;
 }
 
-.ambient-scene__light--three {
-  right: 7%;
-  top: 42%;
+.ambient-scene__water-line--three {
+  animation-delay: -11s;
+  left: 26%;
+  top: 54%;
+  width: 42%;
 }
 
-.ambient-scene__mote {
-  animation: ambient-mote-float 10s infinite alternate var(--motion-ease-breathe);
-  background: rgba(255, 255, 255, 0.68);
-  border-radius: 50%;
-  box-shadow: 0 0 0.9rem rgba(255, 255, 255, 0.65);
-  height: 0.22rem;
+.ambient-scene__water-line--four {
+  animation-delay: -5s;
+  left: 64%;
+  top: 78%;
+  width: 24%;
+}
+
+.ambient-scene__chair-reflection {
+  animation: scene-reflection-breathe 11s infinite alternate
+    var(--motion-ease-breathe);
+  background: linear-gradient(
+    to bottom,
+    rgba(216, 170, 77, 0.18),
+    transparent 78%
+  );
+  clip-path: polygon(27% 0, 73% 0, 100% 100%, 0 100%);
+  height: 24%;
+  left: calc(50% + min(24vw, 23rem) - 2.4rem);
+  opacity: 0.34;
   position: absolute;
-  width: 0.22rem;
+  top: 3%;
+  width: 4.8rem;
 }
 
-.ambient-scene__mote--one { left: 12%; top: 26%; }
-.ambient-scene__mote--two { animation-delay: -4s; left: 82%; top: 18%; }
-.ambient-scene__mote--three { animation-delay: -7s; left: 76%; top: 72%; }
-.ambient-scene__mote--four { animation-delay: -2s; left: 24%; top: 82%; }
-.ambient-scene__mote--five { animation-delay: -5s; left: 58%; top: 10%; }
+.ambient-scene__chair {
+  bottom: 12%;
+  height: 9rem;
+  left: calc(50% + min(24vw, 23rem));
+  position: absolute;
+  transform: translateX(-50%);
+  width: 6rem;
+  z-index: 5;
+}
 
-.ambient-scene__signal {
-  align-items: center;
-  animation: ambient-signal-breathe 7s infinite alternate var(--motion-ease-breathe);
-  bottom: 2rem;
-  color: rgba(40, 39, 34, 0.42);
+.ambient-scene__chair-shadow {
+  background: rgba(42, 47, 43, 0.26);
+  border-radius: 50%;
+  bottom: 0;
+  height: 0.8rem;
+  left: 0.25rem;
+  position: absolute;
+  transform: skewX(-18deg);
+  width: 5.7rem;
+}
+
+.ambient-scene__chair-back {
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--scene-chair) 88%, white),
+    var(--scene-chair)
+  );
+  border: 1px solid rgba(111, 76, 26, 0.24);
+  border-radius: 0.7rem 0.7rem 0.25rem 0.25rem;
+  box-shadow: 0 0.55rem 1.5rem rgba(63, 54, 42, 0.16);
   display: flex;
-  font-size: 0.7rem;
-  gap: 0.55rem;
-  left: 2rem;
-  letter-spacing: 0.08em;
-  position: absolute;
-}
-
-.ambient-scene__signal-ring {
-  border: 1px solid rgba(255, 255, 255, 0.76);
-  border-radius: 50%;
-  height: 2.4rem;
-  position: absolute;
-  width: 2.4rem;
-}
-
-.ambient-scene__signal-mark {
-  align-items: center;
-  background: rgba(255, 255, 255, 0.52);
-  border: 1px solid rgba(255, 255, 255, 0.66);
-  border-radius: 50%;
-  display: inline-flex;
-  font-weight: 780;
-  height: 1.85rem;
+  gap: 0.36rem;
+  height: 4.8rem;
   justify-content: center;
-  width: 1.85rem;
+  left: 1.15rem;
+  padding-top: 0.7rem;
+  position: absolute;
+  top: 0;
+  width: 3.7rem;
 }
 
-.ambient-scene__signal-copy {
-  margin-left: 0.18rem;
+.ambient-scene__chair-back i {
+  background: rgba(123, 82, 26, 0.24);
+  border-radius: 999px;
+  height: 2.7rem;
+  width: 0.2rem;
+}
+
+.ambient-scene__chair-seat {
+  background: linear-gradient(
+    to right,
+    var(--scene-chair-dark),
+    var(--scene-chair) 24%,
+    color-mix(in srgb, var(--scene-chair) 88%, white)
+  );
+  border: 1px solid rgba(102, 68, 24, 0.24);
+  border-radius: 0.28rem 0.28rem 0.55rem 0.55rem;
+  height: 1.15rem;
+  left: 0.2rem;
+  position: absolute;
+  top: 4.25rem;
+  transform: skewX(-3deg);
+  width: 5.6rem;
+}
+
+.ambient-scene__chair-leg {
+  background: var(--scene-chair-dark);
+  border-radius: 0 0 0.2rem 0.2rem;
+  height: 3.45rem;
+  position: absolute;
+  top: 5.18rem;
+  width: 0.46rem;
+}
+
+.ambient-scene__chair-leg--left {
+  left: 0.78rem;
+  transform: rotate(4deg);
+}
+
+.ambient-scene__chair-leg--right {
+  right: 0.78rem;
+  transform: rotate(-4deg);
+}
+
+.ambient-scene__chair-brace {
+  background: rgba(133, 91, 32, 0.72);
+  bottom: 1.2rem;
+  height: 0.2rem;
+  left: 1.15rem;
+  position: absolute;
+  transform: rotate(-1deg);
+  width: 3.75rem;
+}
+
+.ambient-scene__bank {
+  background: var(--scene-bank);
+  bottom: -5%;
+  height: 23%;
+  opacity: 0.8;
+  position: absolute;
+  width: 34%;
+  z-index: 4;
+}
+
+.ambient-scene__bank--left {
+  border-radius: 45% 70% 0 0;
+  left: -9%;
+  transform: rotate(3deg);
+}
+
+.ambient-scene__bank--right {
+  border-radius: 70% 42% 0 0;
+  right: -12%;
+  transform: rotate(-4deg);
+}
+
+.ambient-scene__reeds {
+  bottom: 3%;
+  height: 31%;
+  position: absolute;
+  width: 16rem;
+  z-index: 6;
+}
+
+.ambient-scene__reeds--left {
+  left: 2%;
+}
+
+.ambient-scene__reeds--right {
+  right: 1%;
+  transform: scaleX(-1);
+}
+
+.ambient-scene__reed {
+  animation: scene-reed-sway 9s infinite alternate
+    var(--motion-ease-breathe);
+  background: var(--scene-reed);
+  bottom: 0;
+  height: 76%;
+  left: 12%;
+  position: absolute;
+  transform: rotate(-4deg);
+  transform-origin: 50% 100%;
+  width: 2px;
+}
+
+.ambient-scene__reed::before {
+  background: #655b4b;
+  border-radius: 60% 45% 55% 40%;
+  content: "";
+  height: 1.8rem;
+  left: -0.22rem;
+  position: absolute;
+  top: -1.25rem;
+  transform: rotate(-10deg);
+  width: 0.5rem;
+}
+
+.ambient-scene__reed--two {
+  animation-delay: -3s;
+  height: 58%;
+  left: 25%;
+}
+
+.ambient-scene__reed--three {
+  animation-delay: -6s;
+  height: 88%;
+  left: 39%;
+}
+
+.ambient-scene__reed--four {
+  animation-delay: -1s;
+  height: 68%;
+  left: 57%;
+}
+
+.ambient-scene__reed--five {
+  animation-delay: -7s;
+  height: 82%;
+  left: 73%;
+}
+
+.ambient-scene__reed--six {
+  animation-delay: -2s;
+  height: 62%;
+  left: 22%;
+}
+
+.ambient-scene__reed--seven {
+  animation-delay: -5s;
+  height: 86%;
+  left: 45%;
+}
+
+.ambient-scene__reed--eight {
+  animation-delay: -8s;
+  height: 71%;
+  left: 68%;
+}
+
+.ambient-scene__depth-veil {
+  background:
+    linear-gradient(to bottom, rgba(74, 66, 62, 0.1), transparent 24%),
+    radial-gradient(ellipse at center, transparent 42%, rgba(43, 47, 44, 0.22));
 }
 
 .motion-surface {
@@ -344,7 +637,12 @@
 .screen::before {
   animation: motion-aurora-drift var(--motion-ambient) infinite alternate
     var(--motion-ease-breathe);
-  background: radial-gradient(circle, var(--tone-glow) 0%, transparent 68%);
+  background: linear-gradient(
+    145deg,
+    var(--tone-glow),
+    rgba(255, 250, 243, 0.14) 38%,
+    transparent 72%
+  );
   filter: blur(32px) saturate(0.94);
   height: 25rem;
   opacity: 0.7;
@@ -373,30 +671,27 @@
 }
 
 .home-screen::before {
-  background: conic-gradient(
-    from 145deg,
-    var(--food-glow),
-    var(--rest-glow),
-    var(--visit-glow),
-    var(--tired-glow),
-    var(--food-glow)
+  background: radial-gradient(
+    ellipse at 68% 42%,
+    rgba(205, 175, 151, 0.24),
+    rgba(154, 163, 156, 0.13) 42%,
+    transparent 72%
   );
-  filter: blur(46px) saturate(0.88);
-  opacity: 0.46;
+  filter: blur(42px) saturate(0.8);
+  opacity: 0.38;
   right: -8rem;
   top: 5.5rem;
 }
 
 .timeline-screen::before,
 .data-screen::before {
-  background: conic-gradient(
-    from 210deg,
-    rgba(91, 143, 172, 0.13),
-    rgba(91, 142, 107, 0.12),
-    rgba(125, 99, 159, 0.11),
-    rgba(91, 143, 172, 0.13)
+  background: linear-gradient(
+    155deg,
+    rgba(115, 133, 127, 0.16),
+    rgba(178, 164, 153, 0.1) 48%,
+    transparent 76%
   );
-  opacity: 0.5;
+  opacity: 0.4;
 }
 
 .screen > * {
@@ -853,31 +1148,14 @@
 }
 
 .motion-home::before {
-  background: conic-gradient(
-    from 145deg,
-    rgba(229, 140, 84, 0.44),
-    rgba(92, 156, 190, 0.42),
-    rgba(137, 103, 181, 0.38),
-    rgba(86, 148, 105, 0.4),
-    rgba(229, 140, 84, 0.44)
+  background: linear-gradient(
+    160deg,
+    rgba(200, 164, 145, 0.3),
+    rgba(137, 151, 146, 0.2) 48%,
+    transparent 76%
   );
-  filter: blur(38px) saturate(1.08);
-  opacity: 0.72;
-}
-
-.ambient-scene__orbit-line {
-  border-color: rgba(71, 99, 114, 0.16);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.34),
-    0 0 2.4rem rgba(255, 255, 255, 0.48);
-}
-
-.ambient-scene__orbit-line::after {
-  border: 1px solid rgba(120, 94, 148, 0.1);
-  border-radius: inherit;
-  content: "";
-  inset: 7%;
-  position: absolute;
+  filter: blur(36px) saturate(0.8);
+  opacity: 0.42;
 }
 
 .motion-hero {
@@ -887,12 +1165,11 @@
 
 .motion-hero::before {
   animation: motion-hero-halo 13s infinite alternate var(--motion-ease-breathe);
-  background: conic-gradient(
-    from 110deg,
-    rgba(237, 156, 104, 0.34),
-    rgba(108, 170, 199, 0.28),
-    rgba(151, 119, 192, 0.3),
-    rgba(237, 156, 104, 0.34)
+  background: radial-gradient(
+    ellipse,
+    rgba(213, 181, 157, 0.28),
+    rgba(164, 167, 156, 0.12) 52%,
+    transparent 74%
   );
   border-radius: 50%;
   content: "";
@@ -1254,49 +1531,34 @@
   }
 }
 
-@keyframes ambient-aurora-one {
-  from { transform: translate3d(-3%, -2%, 0) scale(0.92) rotate(-5deg); }
-  to { transform: translate3d(18%, 16%, 0) scale(1.12) rotate(5deg); }
+@keyframes scene-evening-breathe {
+  from { opacity: 0.42; transform: translate3d(-1.5%, 0, 0) scale(0.98); }
+  to { opacity: 0.7; transform: translate3d(1.5%, 0.6%, 0) scale(1.03); }
 }
 
-@keyframes ambient-aurora-two {
-  from { transform: translate3d(5%, -8%, 0) scale(1.04) rotate(3deg); }
-  to { transform: translate3d(-20%, 12%, 0) scale(0.92) rotate(-7deg); }
+@keyframes scene-mist-drift {
+  from { opacity: 0.3; transform: translate3d(-7%, 0, 0) scaleX(1.04); }
+  to { opacity: 0.58; transform: translate3d(7%, 0.4rem, 0) scaleX(1.12); }
 }
 
-@keyframes ambient-aurora-three {
-  from { transform: translate3d(-4%, 7%, 0) scale(0.95) rotate(-4deg); }
-  to { transform: translate3d(17%, -15%, 0) scale(1.1) rotate(6deg); }
+@keyframes scene-depth-breathe {
+  from { opacity: 0.38; transform: translate3d(-1.2%, 0, 0) scale(1.03); }
+  to { opacity: 0.48; transform: translate3d(1.2%, 0.18rem, 0) scale(1.045); }
 }
 
-@keyframes ambient-aurora-four {
-  from { transform: translate3d(8%, 6%, 0) scale(1.08) rotate(4deg); }
-  to { transform: translate3d(-18%, -14%, 0) scale(0.94) rotate(-6deg); }
+@keyframes scene-water-drift {
+  from { opacity: 0.28; transform: translate3d(-7%, 0, 0) scaleX(0.94); }
+  to { opacity: 0.58; transform: translate3d(10%, 0, 0) scaleX(1.08); }
 }
 
-@keyframes ambient-haze-breathe {
-  from { opacity: 0.22; transform: scale(0.88); }
-  to { opacity: 0.48; transform: scale(1.06); }
+@keyframes scene-reflection-breathe {
+  from { opacity: 0.2; transform: translate3d(-0.12rem, 0, 0) scaleX(0.92); }
+  to { opacity: 0.38; transform: translate3d(0.16rem, 0.2rem, 0) scaleX(1.06); }
 }
 
-@keyframes ambient-orbit-spin {
-  from { transform: translate3d(-50%, -50%, 0) rotate(-14deg); }
-  to { transform: translate3d(-50%, -50%, 0) rotate(346deg); }
-}
-
-@keyframes ambient-orbit-spin-reverse {
-  from { transform: translate3d(-50%, -50%, 0) rotate(18deg); }
-  to { transform: translate3d(-50%, -50%, 0) rotate(-342deg); }
-}
-
-@keyframes ambient-mote-float {
-  from { opacity: 0.2; transform: translate3d(0, 0.3rem, 0) scale(0.82); }
-  to { opacity: 0.78; transform: translate3d(0.55rem, -0.8rem, 0) scale(1.16); }
-}
-
-@keyframes ambient-signal-breathe {
-  from { opacity: 0.35; transform: translate3d(0, 0.15rem, 0) scale(0.98); }
-  to { opacity: 0.65; transform: translate3d(0, -0.15rem, 0) scale(1.02); }
+@keyframes scene-reed-sway {
+  from { opacity: 0.82; transform: rotate(-5deg); }
+  to { opacity: 1; transform: rotate(3deg); }
 }
 
 @keyframes motion-branch-arrive {
@@ -1358,7 +1620,7 @@
 
 @media (max-width: 520px) {
   .motion-stage {
-    background: linear-gradient(155deg, #f3e8df, #e1ecec 48%, #ece4f2);
+    background: linear-gradient(155deg, #c6afa6, #a7afac 48%, #69716e);
   }
 
   .motion-surface {
@@ -1366,19 +1628,46 @@
     background: rgba(250, 248, 244, 0.54);
   }
 
-  .ambient-scene__aurora {
-    filter: blur(52px) saturate(1.06);
-    height: 32rem;
-    width: 32rem;
+  .ambient-scene__evening-light {
+    height: 22rem;
+    right: -34%;
+    top: 4%;
+    width: 28rem;
   }
 
-  .ambient-scene__orbit {
-    opacity: 0.58;
+  .ambient-scene__ridge {
+    width: 116%;
   }
 
-  .ambient-scene__mote:nth-child(n + 4),
-  .ambient-scene__signal {
-    display: none;
+  .ambient-scene__chair {
+    bottom: 7%;
+    left: 78%;
+    opacity: 0.72;
+    transform: translateX(-50%) scale(0.78);
+    transform-origin: 50% 100%;
+  }
+
+  .ambient-scene__chair-reflection {
+    left: calc(78% - 2.4rem);
+    opacity: 0.2;
+  }
+
+  .ambient-scene__reeds {
+    height: 24%;
+    opacity: 0.72;
+    width: 9rem;
+  }
+
+  .ambient-scene__reeds--left {
+    left: -3%;
+  }
+
+  .ambient-scene__reeds--right {
+    right: -4%;
+  }
+
+  .ambient-scene__bank {
+    opacity: 0.62;
   }
 
   .screen::before {
@@ -1442,15 +1731,16 @@
     transition-duration: 0.01ms !important;
   }
 
-  .ambient-scene__aurora {
-    opacity: 0.2;
+  .ambient-scene__evening-light,
+  .ambient-scene__mist,
+  .ambient-scene__ridge,
+  .ambient-scene__water-line,
+  .ambient-scene__chair-reflection,
+  .ambient-scene__reed {
     transform: none;
     will-change: auto;
   }
 
-  .ambient-scene__orbit,
-  .ambient-scene__mote,
-  .ambient-scene__signal,
   .motion-state-card::before,
   .motion-orbit::before,
   .saved-ripple {

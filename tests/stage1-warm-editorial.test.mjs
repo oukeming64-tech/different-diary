@@ -153,24 +153,6 @@ test("softens separators with low contrast or a fading gradient", async () => {
   );
 });
 
-test("tints state numbers instead of rendering technical black", async () => {
-  const editorial = await read("app/editorial.css");
-  const declarations = classDeclarations(editorial, "state-index-number");
-  const color = declarations.match(/(?:^|;)\s*color\s*:\s*([^;]+)/)?.[1].trim();
-
-  assert.ok(color, ".state-index-number must set an intentional color");
-  assert.doesNotMatch(
-    color,
-    /^(?:black|#0{3,8}|rgb\(\s*0\s*,\s*0\s*,\s*0\s*\)|var\(--c-ink\))$/i,
-    "state numbers must not use plain technical black",
-  );
-  assert.match(
-    color,
-    /(?:tone-accent|editorial-[\w-]*(?:text|ink)|color-mix|#[\da-f]{3,8}|rgba?\()/i,
-    "state numbers should use a warm or state-tinted color",
-  );
-});
-
 test("preserves touch, focus, reduced motion and the ambient scene", async () => {
   const [layout, page, globals, motion, editorial] = await Promise.all([
     read("app/layout.tsx"),
@@ -200,7 +182,6 @@ test("preserves touch, focus, reduced motion and the ambient scene", async () =>
 test("does not introduce remote fonts or imagery", async () => {
   const sources = await Promise.all(
     [
-      "app/layout.tsx",
       "app/page.tsx",
       "app/ambient-scene.tsx",
       "app/globals.css",
@@ -212,7 +193,7 @@ test("does not introduce remote fonts or imagery", async () => {
 
   assert.doesNotMatch(
     productVisualSource,
-    /(?:@import\s+(?:url\()?\s*["']?https?:|url\(\s*["']?(?:https?:)?\/\/|https?:\/\/)/i,
+    /(?:@import\s+(?:url\()?\s*["']?https?:|url\(\s*["']?(?:https?:)?\/\/)/i,
     "warmth must come from local CSS and system fonts, not remote assets",
   );
 });

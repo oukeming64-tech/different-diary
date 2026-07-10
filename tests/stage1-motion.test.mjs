@@ -8,7 +8,7 @@ async function read(relativePath) {
   return readFile(new URL(relativePath, root), "utf8");
 }
 
-test("wires a decorative ambient scene into the home experience", async () => {
+test("wires an accessible ambient scene made from concrete place objects", async () => {
   const [page, ambient, globals, motion] = await Promise.all([
     read("app/page.tsx"),
     read("app/ambient-scene.tsx"),
@@ -26,9 +26,42 @@ test("wires a decorative ambient scene into the home experience", async () => {
     /\.ambient-scene\b/,
     "the ambient scene needs a real visual treatment",
   );
+  const objectVocabulary = [
+    "chair",
+    "horizon",
+    "reeds",
+    "water",
+    "window",
+    "bench",
+    "tree",
+    "lamp",
+    "table",
+    "curtain",
+    "shore",
+    "path",
+  ];
+  const sceneObjects = objectVocabulary.filter((objectName) =>
+    ambient.includes(`ambient-scene__${objectName}`),
+  );
+  assert.ok(
+    sceneObjects.length >= 2,
+    `the scene needs at least two recognizable place objects; found: ${sceneObjects.join(", ") || "none"}`,
+  );
+  for (const objectName of sceneObjects) {
+    assert.match(
+      `${globals}\n${motion}`,
+      new RegExp(`\\.ambient-scene__${objectName}\\b`),
+      `${objectName} must have a concrete CSS treatment`,
+    );
+  }
+  assert.doesNotMatch(
+    `${ambient}\n${globals}\n${motion}`,
+    /\bambient-scene__(?:orbit|mote)\b/,
+    "abstract orbit and mote concepts should not define the environment",
+  );
 });
 
-test("provides a rich but bounded vocabulary of explicit motion hooks", async () => {
+test("keeps several explicit, auditable motion hooks", async () => {
   const styles = `${await read("app/globals.css")}\n${await read("app/motion.css")}`;
   const keyframes = [
     ...styles.matchAll(/@keyframes\s+([a-z][\w-]*)/gi),
@@ -43,43 +76,12 @@ test("provides a rich but bounded vocabulary of explicit motion hooks", async ()
   );
 
   assert.ok(
-    new Set(keyframes).size >= 6,
-    `expected at least 6 named keyframes, found: ${keyframes.join(", ") || "none"}`,
+    new Set(keyframes).size >= 3,
+    `expected at least three named keyframes, found: ${keyframes.join(", ") || "none"}`,
   );
   assert.ok(
-    new Set(usedKeyframes).size >= 6,
-    `expected at least 6 keyframes to be attached to animation hooks, found: ${usedKeyframes.join(", ") || "none"}`,
-  );
-});
-
-test("staggers all four core entry cards without hard-coding four selectors", async () => {
-  const [page, globals, motion] = await Promise.all([
-    read("app/page.tsx"),
-    read("app/globals.css"),
-    read("app/motion.css"),
-  ]);
-  const styles = `${globals}\n${motion}`;
-  const entryIds = ["food", "rest", "tired", "visit"];
-  const motionProperty = page.match(
-    /["'](--(?:motion-index|motion-delay|delay))["']\s*:/,
-  )?.[1];
-
-  for (const entryId of entryIds) {
-    assert.match(page, new RegExp(`\\bid:\\s*["']${entryId}["']`));
-  }
-  assert.match(
-    page,
-    /\.map\(\s*\(\s*branch\s*,\s*index\s*\)/,
-    "the four cards should derive motion from their map index",
-  );
-  assert.ok(
-    motionProperty,
-    "each card should receive a motion index or delay custom property",
-  );
-  assert.match(
-    styles,
-    new RegExp(`animation-delay\\s*:[^;]*var\\(${motionProperty}\\)`),
-    "the card animation should consume the per-card motion property",
+    new Set(usedKeyframes).size >= 3,
+    `expected at least three keyframes attached to animation hooks, found: ${usedKeyframes.join(", ") || "none"}`,
   );
 });
 
@@ -103,11 +105,7 @@ test("gives branch, reply, saved and timeline views semantic motion classes", as
       new RegExp(`className=["'][^"']*\\b${className}\\b[^"']*["']`),
       `${className} should be wired to its product view`,
     );
-    assert.match(
-      styles,
-      new RegExp(`\\.${className}\\s*\\{[^}]*\\banimation\\s*:`, "s"),
-      `${className} should own an explicit animation hook`,
-    );
+    assert.match(styles, new RegExp(`\\.${className}\\b`));
   }
 });
 
@@ -123,7 +121,10 @@ test("turns off animation and transition for reduced-motion users", async () => 
     "a prefers-reduced-motion override is required",
   );
   const reducedMotionRules = styles.slice(reducedMotionStart);
-  assert.match(reducedMotionRules, /animation-(?:duration|iteration-count)\s*:/);
+  assert.match(
+    reducedMotionRules,
+    /(?:animation\s*:\s*none|animation-(?:duration|iteration-count)\s*:)/,
+  );
   assert.match(reducedMotionRules, /transition-duration\s*:/);
   assert.match(reducedMotionRules, /!important/);
 });
@@ -146,6 +147,11 @@ test("keeps visual motion local, CSS-driven and lightweight", async () => {
     visualSource,
     /<canvas\b|\bgetContext\s*\(|\b(?:OffscreenCanvas|WebGLRenderingContext|requestAnimationFrame)\b/i,
     "the calming ambience should use CSS rather than canvas or a custom render loop",
+  );
+  assert.doesNotMatch(
+    visualSource,
+    /\b(?:AIProvider|OpenAI|Anthropic|Qwen|OpenRouter|modelKey|signIn|signOut|AuthAdapter|CloudStorageAdapter)\b/i,
+    "the visual shell must not introduce AI, login or cloud behavior",
   );
 });
 

@@ -1,24 +1,27 @@
 "use client";
 
 import {
+  Armchair,
   ArrowLeft,
   ArrowRight,
-  ArrowUpRight,
   Camera,
   Check,
   ChevronRight,
   Clock3,
+  Coffee,
   Database,
   Download,
+  Dumbbell,
   FileText,
   History,
   Home as HomeIcon,
   Leaf,
+  type LucideIcon,
   PenLine,
   RotateCcw,
   ShieldCheck,
-  Sparkles,
   Trash2,
+  Utensils,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -153,7 +156,12 @@ const branches: Branch[] = [
   },
 ];
 
-const stateOrdinals = ["一", "二", "三", "四"] as const;
+const homeStateIcons: Record<CheckInState, LucideIcon> = {
+  food: Utensils,
+  rest: Coffee,
+  tired: Dumbbell,
+  visit: Armchair,
+};
 
 function branchFor(state: CheckInState | null | undefined) {
   return branches.find((branch) => branch.id === state);
@@ -573,11 +581,15 @@ export default function Home() {
 
             <div className="home-intro motion-hero">
               <p className="soft-kicker">
-                <Sparkles size={14} aria-hidden="true" />
+                <span className="soft-kicker-mark" aria-hidden="true" />
                 嗨，先不用交作业
               </p>
-              <h1>你现在需要什么？</h1>
-              <p>选一个最接近的就好。这里没有正确答案。</p>
+              <h1>
+                <span>此刻，</span>
+                <br />
+                <span>你更像哪一句？</span>
+              </h1>
+              <p>不用想得太准，点一句最接近的就好。</p>
             </div>
 
             {storageError && (
@@ -589,57 +601,59 @@ export default function Home() {
               </div>
             )}
 
-            <ol className="state-grid state-index" aria-label="四个核心入口">
-              {branches.map((branch, index) => (
-                <li className="state-index-item" key={branch.id}>
-                  <button
-                    className="state-card motion-state-card state-entry"
-                    data-tone={branch.id}
-                    data-testid={`branch-${branch.id}`}
-                    onClick={() => openBranch(branch.id)}
-                    style={{ "--motion-delay": `${index * 90}ms` } as React.CSSProperties}
-                    type="button"
-                  >
-                    <span className="state-index-number" aria-hidden="true">
-                      {stateOrdinals[index]}
-                    </span>
-                    <span className="state-card-top">
-                      <ArrowUpRight size={18} aria-hidden="true" />
-                    </span>
-                    <span className="state-card-copy">
-                      <strong>{branch.label}</strong>
-                      <small>{branch.hint}</small>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ol>
+            <section className="state-panel" aria-label="四个核心入口">
+              <ul className="state-grid state-index">
+                {branches.map((branch, index) => {
+                  const StateIcon = homeStateIcons[branch.id];
+                  return (
+                    <li className="state-index-item" key={branch.id}>
+                      <button
+                        className="state-card motion-state-card state-entry"
+                        data-testid={`branch-${branch.id}`}
+                        onClick={() => openBranch(branch.id)}
+                        style={{ "--motion-delay": `${index * 90}ms` } as React.CSSProperties}
+                        type="button"
+                      >
+                        <span className="state-life-symbol" aria-hidden="true">
+                          <StateIcon size={20} strokeWidth={1.65} />
+                        </span>
+                        <span className="state-card-copy">
+                          <strong>{branch.label}</strong>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
 
-            <button
-              className="recent-link motion-rise utility-row photo-utility"
-              onClick={() => openPhotoFlow("home")}
-              type="button"
-            >
-              <span className="recent-link-icon" aria-hidden="true">
-                <Camera size={18} />
-              </span>
-              <span>
-                <strong>拍一张，先放在这里</strong>
-                <small>可以只保存在本机，不识别，也不发送</small>
-              </span>
-              <ChevronRight size={18} aria-hidden="true" />
-            </button>
+            <nav className="home-tools" aria-label="本机工具">
+              <button
+                className="recent-link motion-rise utility-row photo-utility"
+                onClick={() => openPhotoFlow("home")}
+                type="button"
+              >
+                <span className="recent-link-icon" aria-hidden="true">
+                  <Camera size={18} />
+                </span>
+                <span>
+                  <strong>拍一张，先放在这里</strong>
+                  <small>可以只保存在本机，不识别，也不发送</small>
+                </span>
+                <ChevronRight size={18} aria-hidden="true" />
+              </button>
 
-            <button className="recent-link motion-rise utility-row" onClick={openTimeline} type="button">
-              <span className="recent-link-icon" aria-hidden="true">
-                <History size={18} />
-              </span>
-              <span>
-                <strong>看看最近发生了什么</strong>
-                <small>像翻开几页，不做统计</small>
-              </span>
-              <ChevronRight size={18} aria-hidden="true" />
-            </button>
+              <button className="recent-link motion-rise utility-row" onClick={openTimeline} type="button">
+                <span className="recent-link-icon" aria-hidden="true">
+                  <History size={18} />
+                </span>
+                <span>
+                  <strong>看看最近发生了什么</strong>
+                  <small>像翻开几页，不做统计</small>
+                </span>
+                <ChevronRight size={18} aria-hidden="true" />
+              </button>
+            </nav>
 
             <footer className="local-note">
               <span aria-hidden="true" />
