@@ -16,6 +16,7 @@ import {
   Footprints,
   History,
   Home as HomeIcon,
+  ImageDown,
   Leaf,
   type LucideIcon,
   PenLine,
@@ -40,6 +41,7 @@ import {
   ONBOARDING_PREFERENCE_KEY,
 } from "./onboarding-guide";
 import { PhotoFlow } from "./photo-flow";
+import { TodayPoster } from "./today-poster";
 
 import {
   clearAllLocalDataAndRecreateIdentity,
@@ -72,6 +74,7 @@ import {
   recordActivityLocally,
   type CreateActivityRecordInput,
 } from "../lib/stage3";
+import { createTodayPosterModel } from "../lib/poster";
 
 type View =
   | "home"
@@ -79,6 +82,7 @@ type View =
   | "activity"
   | "ai"
   | "photo"
+  | "poster"
   | "reply"
   | "write"
   | "saved"
@@ -299,6 +303,10 @@ export default function Home() {
     }
     return groups;
   }, [records]);
+  const todayPosterModel = useMemo(
+    () => createTodayPosterModel({ records, activities }),
+    [activities, records],
+  );
 
   useEffect(() => {
     let active = true;
@@ -659,7 +667,7 @@ export default function Home() {
   const ambientTone: AmbientSceneTone =
     view === "home"
       ? "home"
-      : view === "timeline" || view === "detail" || view === "data"
+      : view === "timeline" || view === "detail" || view === "data" || view === "poster"
         ? "memory"
         : tone === "visit"
           ? "sit"
@@ -789,6 +797,21 @@ export default function Home() {
                 </span>
                 <ChevronRight size={18} aria-hidden="true" />
               </button>
+
+              <button
+                className="recent-link motion-rise utility-row poster-utility"
+                onClick={() => setView("poster")}
+                type="button"
+              >
+                <span className="recent-link-icon" aria-hidden="true">
+                  <ImageDown size={18} />
+                </span>
+                <span>
+                  <strong>生成今天的海报</strong>
+                  <small>只用今天保存在本机的选择</small>
+                </span>
+                <ChevronRight size={18} aria-hidden="true" />
+              </button>
             </nav>
           </div>
         )}
@@ -812,6 +835,10 @@ export default function Home() {
             onWrite={() => setView("write")}
             previewUrl={photoPreviewUrl}
           />
+        )}
+
+        {view === "poster" && (
+          <TodayPoster model={todayPosterModel} onBack={goHome} />
         )}
 
         {view === "ai" && activeBranch && currentResponse && (
