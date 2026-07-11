@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "jianfei-paipai-shell";
-const CACHE_VERSION = "stage3-activity-reward-v1";
+const CACHE_VERSION = "v0.1.0-shell-v2";
 const SHELL_CACHE = `${CACHE_PREFIX}-${CACHE_VERSION}`;
 const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, "");
 const scopedPath = (path) => `${SCOPE_PATH}${path}`;
@@ -12,18 +12,53 @@ const APP_SHELL = [
 ];
 const LOCAL_ONLY_PROTOCOLS = new Set(["blob:", "data:"]);
 
+async function responseForCache(response) {
+  const headers = new Headers(response.headers);
+  for (const header of [
+    "connection",
+    "content-encoding",
+    "content-length",
+    "keep-alive",
+    "transfer-encoding",
+    "vary",
+  ]) {
+    headers.delete(header);
+  }
+  return new Response(await response.arrayBuffer(), {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 async function cacheAppShell() {
   const cache = await caches.open(SHELL_CACHE);
+  let buildAssets = [];
+
+  try {
+    const shellResponse = await fetch(APP_ROOT, { cache: "reload" });
+    if (shellResponse.ok) {
+      await cache.put(APP_ROOT, await responseForCache(shellResponse.clone()));
+      const shellHtml = await shellResponse.text();
+      buildAssets = [...shellHtml.matchAll(/(?:src|href)="([^"]*\/assets\/[^"]+)"/g)]
+        .map((match) => new URL(match[1], self.location.origin).pathname)
+        .filter((path) => path.startsWith(scopedPath("/assets/")));
+    }
+  } catch {
+    // The remaining shell files can still install when the root is unavailable.
+  }
 
   await Promise.all(
-    APP_SHELL.map(async (path) => {
-      try {
-        const response = await fetch(path, { cache: "reload" });
-        if (response.ok) await cache.put(path, response);
-      } catch {
-        // A missing optional icon must not prevent the worker from installing.
-      }
-    }),
+    [...new Set([...APP_SHELL.filter((path) => path !== APP_ROOT), ...buildAssets])].map(
+      async (path) => {
+        try {
+          const response = await fetch(path, { cache: "reload" });
+          if (response.ok) await cache.put(path, await responseForCache(response));
+        } catch {
+          // A missing optional icon must not prevent the worker from installing.
+        }
+      },
+    ),
   );
 }
 
@@ -57,7 +92,9 @@ async function networkFirstShell(request) {
 
   try {
     const response = await fetch(request);
-    if (response.ok) await cache.put(APP_ROOT, response.clone());
+    if (response.ok) {
+      await cache.put(APP_ROOT, await responseForCache(response.clone()));
+    }
     return response;
   } catch {
     return (await cache.match(APP_ROOT)) ?? Response.error();
@@ -71,7 +108,7 @@ async function cacheFirstStatic(request) {
 
   const response = await fetch(request);
   if (response.ok && response.type === "basic") {
-    await cache.put(request, response.clone());
+    await cache.put(request, await responseForCache(response.clone()));
   }
   return response;
 }
@@ -94,8 +131,7 @@ self.addEventListener("fetch", (event) => {
 
   if (
     APP_SHELL.includes(url.pathname) ||
-    url.pathname.startsWith(scopedPath("/assets/")) ||
-    url.pathname.startsWith(scopedPath("/_next/static/"))
+    url.pathname.startsWith(scopedPath("/assets/"))
   ) {
     event.respondWith(cacheFirstStatic(request));
   }

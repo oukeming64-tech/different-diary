@@ -88,7 +88,6 @@ export function TodayPoster({ model, onBack }: TodayPosterProps) {
               </div>
             ) : posterUrl ? (
               // The preview is a short-lived local Blob URL created from canvas.
-              // eslint-disable-next-line @next/next/no-img-element
               <img alt="根据今天本机选择生成的海报预览" src={posterUrl} />
             ) : (
               <div className="today-poster__preparing" role="status">

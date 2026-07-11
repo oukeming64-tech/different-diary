@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { readAppSource } from "./app-source.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -10,7 +11,7 @@ async function read(relativePath) {
 
 test("wires an accessible ambient scene made from concrete place objects", async () => {
   const [page, ambient, globals, motion] = await Promise.all([
-    read("app/page.tsx"),
+    readAppSource(),
     read("app/ambient-scene.tsx"),
     read("app/globals.css"),
     read("app/motion.css"),
@@ -87,7 +88,7 @@ test("keeps several explicit, auditable motion hooks", async () => {
 
 test("gives branch, reply, saved and timeline views semantic motion classes", async () => {
   const [page, globals, motion] = await Promise.all([
-    read("app/page.tsx"),
+    readAppSource(),
     read("app/globals.css"),
     read("app/motion.css"),
   ]);
@@ -131,7 +132,7 @@ test("turns off animation and transition for reduced-motion users", async () => 
 
 test("keeps visual motion local, CSS-driven and lightweight", async () => {
   const [page, ambient, globals, motion] = await Promise.all([
-    read("app/page.tsx"),
+    readAppSource(),
     read("app/ambient-scene.tsx"),
     read("app/globals.css"),
     read("app/motion.css"),
@@ -157,7 +158,7 @@ test("keeps visual motion local, CSS-driven and lightweight", async () => {
 
 test("keeps pressure language out of all user-facing stage 1 responses", async () => {
   const [page, responses] = await Promise.all([
-    read("app/page.tsx"),
+    readAppSource(),
     read("lib/stage1/responses.ts"),
   ]);
   const userFacingCopy = `${page}\n${responses}`;

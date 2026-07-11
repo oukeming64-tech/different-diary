@@ -1,0 +1,39 @@
+name: 问题报告
+description: 报告可以稳定复现的产品或代码问题
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: 请勿提交真实 Key、照片、日记导出或其他隐私内容。
+  - type: textarea
+    id: problem
+    attributes:
+      label: 发生了什么
+      description: 说明实际结果和你原本预期的结果。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 打开……
+        2. 点击……
+        3. 看到……
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 设备与浏览器
+      placeholder: 例如 iPhone 15 / iOS 19 / Safari
+    validations:
+      required: true
+  - type: textarea
+    id: privacy
+    attributes:
+      label: 是否影响本机数据或隐私
+      description: 如果不确定，可以写“不确定”。不要粘贴真实数据。
+    validations:
+      required: true

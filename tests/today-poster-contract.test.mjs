@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
+import { readAppSource } from "./app-source.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -29,7 +30,7 @@ test("adds a local-only poster as an auxiliary home tool", async () => {
     assert.equal(await exists(file), true, `${file} should exist`);
   }
 
-  const page = await read("app/page.tsx");
+  const page = await readAppSource();
   assert.match(page, /生成今天的海报/);
   assert.match(page, /把今天排成一张图/);
   const stateGrid = page.indexOf('className="state-grid state-index"');

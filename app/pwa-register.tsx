@@ -32,7 +32,7 @@ export function PwaRegister() {
     useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
-    if (process.env.NODE_ENV !== "production") return;
+    if (!import.meta.env.PROD) return;
     if (document.documentElement.dataset.standaloneDownload === "true") return;
     if (!("serviceWorker" in navigator)) return;
 

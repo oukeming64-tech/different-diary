@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
+import { readAppSource } from "./app-source.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -32,7 +33,7 @@ test("keeps movement responsibilities in small explicit units", async () => {
     assert.equal(await exists(file), true, `${file} should exist`);
   }
 
-  const page = await read("app/page.tsx");
+  const page = await readAppSource();
   assert.match(page, /<ActivityFlow\b/);
   assert.match(page, /<ActivityReward\b/);
   assert.match(page, /recordActivityLocally\s*\(/);
@@ -44,7 +45,7 @@ test("keeps movement responsibilities in small explicit units", async () => {
 });
 
 test("keeps the four emotional entries primary and movement auxiliary", async () => {
-  const page = await read("app/page.tsx");
+  const page = await readAppSource();
   const stateGrid = page.indexOf('className="state-grid state-index"');
   const activityUtility = page.indexOf("activity-utility");
 

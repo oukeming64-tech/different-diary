@@ -1,0 +1,399 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+import type { AmbientSceneTone } from "../ambient-scene";
+import { ONBOARDING_PREFERENCE_KEY } from "../onboarding-guide";
+import {
+  saveCheckIn,
+  selectLocalResponse,
+  type ActivityRecordV1,
+  type CheckInState,
+  type CheckInV1,
+  type LocalResponse,
+} from "../../lib/stage1";
+import { recordPhotoOnly } from "../../lib/stage2";
+import {
+  recordActivityLocally,
+  type CreateActivityRecordInput,
+} from "../../lib/stage3";
+import { branchFor, type DiaryView } from "./model";
+import { useLocalDiaryLibrary } from "./use-local-diary-library";
+import { usePhotoDraft } from "./use-photo-draft";
+
+export function useDiaryController() {
+  const surfaceRef = useRef<HTMLElement>(null);
+  const [view, setView] = useState<DiaryView>("home");
+  const [activeBranchId, setActiveBranchId] = useState<CheckInState | null>(null);
+  const [selectedIntentId, setSelectedIntentId] = useState<string | null>(null);
+  const [currentResponse, setCurrentResponse] = useState<LocalResponse | null>(null);
+  const [draftText, setDraftText] = useState("");
+  const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
+  const [lastSavedRecord, setLastSavedRecord] = useState<CheckInV1 | null>(null);
+  const [lastSavedActivity, setLastSavedActivity] = useState<ActivityRecordV1 | null>(null);
+  const [photoOrigin, setPhotoOrigin] = useState<"home" | "branch">("home");
+  const [activityOrigin, setActivityOrigin] = useState<"home" | "branch">("home");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [dataNotice, setDataNotice] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  const library = useLocalDiaryLibrary();
+  const photoDraft = usePhotoDraft();
+  const {
+    records,
+    attachments,
+    activities,
+    storageError,
+    setStorageError,
+    isReady,
+    wasEmptyOnFirstOpen,
+    attachmentsByCheckIn,
+    activitiesByCheckIn,
+    groupedRecords,
+    todayPosterModel,
+    ensureIdentityForSave,
+    addCheckIn,
+    addActivity,
+    removeRecord,
+    createExport,
+    clearLibrary,
+  } = library;
+  const {
+    processedPhoto,
+    photoPreviewUrl,
+    photoError,
+    isProcessingPhoto,
+    clearPhotoDraft,
+    preparePhoto,
+  } = photoDraft;
+
+  const activeBranch = branchFor(activeBranchId);
+  const selectedRecord = records.find((record) => record.id === selectedRecordId);
+  const selectedAttachment = selectedRecord
+    ? attachmentsByCheckIn.get(selectedRecord.id)
+    : undefined;
+  const selectedActivity = selectedRecord
+    ? activitiesByCheckIn.get(selectedRecord.id)
+    : undefined;
+
+  useEffect(() => {
+    if (!isReady || !wasEmptyOnFirstOpen) return;
+    let shouldShow = false;
+    try {
+      shouldShow = window.localStorage.getItem(ONBOARDING_PREFERENCE_KEY) !== "done";
+    } catch {
+      shouldShow = true;
+    }
+    if (!shouldShow) return;
+    const timer = window.setTimeout(() => setShowOnboarding(true), 0);
+    return () => window.clearTimeout(timer);
+  }, [isReady, wasEmptyOnFirstOpen]);
+
+  useEffect(() => {
+    if (surfaceRef.current) surfaceRef.current.scrollTop = 0;
+  }, [view]);
+
+  function resetConversation() {
+    setActiveBranchId(null);
+    setSelectedIntentId(null);
+    setCurrentResponse(null);
+    setDraftText("");
+    setLastSavedRecord(null);
+    setLastSavedActivity(null);
+    setStorageError(null);
+    clearPhotoDraft();
+  }
+
+  function goHome() {
+    resetConversation();
+    setView("home");
+  }
+
+  function closeOnboarding() {
+    try {
+      window.localStorage.setItem(ONBOARDING_PREFERENCE_KEY, "done");
+    } catch {
+      // The guide is a non-authoritative UI preference; storage failure is safe.
+    }
+    setShowOnboarding(false);
+  }
+
+  function openBranch(id: CheckInState) {
+    clearPhotoDraft();
+    setActiveBranchId(id);
+    setSelectedIntentId(null);
+    setCurrentResponse(null);
+    setDraftText("");
+    setStorageError(null);
+    setView("branch");
+  }
+
+  function openPhotoFlow(origin: "home" | "branch") {
+    const branchId = activeBranchId ?? "food";
+    const intentId = "photo-no-calories";
+    const response = selectLocalResponse({
+      state: branchId,
+      intentId,
+      recentResponseKeys: records.map((record) => record.responseKey),
+    });
+    clearPhotoDraft();
+    setPhotoOrigin(origin);
+    setActiveBranchId(branchId);
+    setSelectedIntentId(intentId);
+    setCurrentResponse(response);
+    setDraftText("");
+    setStorageError(null);
+    setView("photo");
+  }
+
+  function openActivityFlow(origin: "home" | "branch") {
+    clearPhotoDraft();
+    setActivityOrigin(origin);
+    setActiveBranchId("tired");
+    setSelectedIntentId("activity-record");
+    setCurrentResponse(null);
+    setStorageError(null);
+    setView("activity");
+  }
+
+  function closeActivityFlow() {
+    setStorageError(null);
+    if (activityOrigin === "branch") setView("branch");
+    else goHome();
+  }
+
+  function chooseIntent(intentId: string) {
+    if (!activeBranchId) return;
+    if (activeBranchId === "food" && intentId === "photo-no-calories") {
+      openPhotoFlow("branch");
+      return;
+    }
+    if (activeBranchId === "tired" && intentId === "remember") {
+      openActivityFlow("branch");
+      return;
+    }
+    const response = selectLocalResponse({
+      state: activeBranchId,
+      intentId,
+      recentResponseKeys: records.map((record) => record.responseKey),
+    });
+    setSelectedIntentId(intentId);
+    setCurrentResponse(response);
+    setStorageError(null);
+    setView("reply");
+  }
+
+  function closePhotoFlow() {
+    clearPhotoDraft();
+    if (photoOrigin === "branch") setView("branch");
+    else goHome();
+  }
+
+  async function remember(userText: string | null, responseOverride?: LocalResponse) {
+    const response = responseOverride ?? currentResponse;
+    if (!activeBranchId || !selectedIntentId || !response) return;
+    setIsSaving(true);
+    setStorageError(null);
+    try {
+      const identity = await ensureIdentityForSave();
+      const savedPhoto = processedPhoto
+        ? await recordPhotoOnly({
+            image: processedPhoto,
+            localUserId: identity.id,
+            state: activeBranchId,
+            intentId: selectedIntentId,
+            userText: userText?.trim() || null,
+            responseKey: response.key,
+            responseText: response.text,
+          })
+        : null;
+      const record = savedPhoto
+        ? savedPhoto.checkIn
+        : await saveCheckIn({
+            localUserId: identity.id,
+            state: activeBranchId,
+            intentId: selectedIntentId,
+            userText: userText?.trim() || null,
+            responseKey: response.key,
+            responseText: response.text,
+          });
+      addCheckIn(record, savedPhoto?.attachment);
+      setLastSavedActivity(null);
+      setLastSavedRecord(record);
+      if (savedPhoto) clearPhotoDraft();
+      setView("saved");
+    } catch {
+      setStorageError(
+        processedPhoto
+          ? "这次没有成功放进本机。照片和你写下的内容还在这里。"
+          : "这次没有成功记住。你写下的内容还在。",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function rememberActivity(
+    draft: Omit<CreateActivityRecordInput, "localUserId">,
+  ) {
+    setIsSaving(true);
+    setStorageError(null);
+    try {
+      const identity = await ensureIdentityForSave();
+      const saved = await recordActivityLocally({ ...draft, localUserId: identity.id });
+      addActivity(saved.checkIn, saved.activity);
+      setLastSavedRecord(saved.checkIn);
+      setLastSavedActivity(saved.activity);
+      setView("saved");
+    } catch {
+      setStorageError("这次没有成功记住。刚才填的内容还在这里，可以再试一次。");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  function openTimeline() {
+    setDataNotice(null);
+    setView("timeline");
+  }
+
+  function openRecord(id: string) {
+    setSelectedRecordId(id);
+    setConfirmDelete(false);
+    setView("detail");
+  }
+
+  async function removeSelectedRecord() {
+    if (!selectedRecordId) return;
+    setIsDeleting(true);
+    setStorageError(null);
+    try {
+      await removeRecord(selectedRecordId);
+      setSelectedRecordId(null);
+      setConfirmDelete(false);
+      setView("timeline");
+    } catch {
+      setStorageError("这条记录暂时没有删掉，它仍然留在本机。再试一次就好。");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
+  async function exportData() {
+    setIsExporting(true);
+    setDataNotice(null);
+    try {
+      const json = await createExport();
+      const url = URL.createObjectURL(
+        new Blob([json], { type: "application/json;charset=utf-8" }),
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `不一样的日记-本机记录-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+      setDataNotice(
+        attachments.length
+          ? "记录、运动详情和照片索引已经生成；照片文件仍只留在本机。"
+          : activities.length
+            ? "记录和运动详情已经生成副本，本机内容没有变化。"
+            : "副本已经生成，本机记录没有变化。",
+      );
+    } catch {
+      setDataNotice("暂时没有生成文件，本机记录没有变化。");
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  async function clearAllData() {
+    setIsClearing(true);
+    setDataNotice(null);
+    try {
+      await clearLibrary();
+      setConfirmClear(false);
+      setSelectedRecordId(null);
+      setDataNotice("本机记录已经清空。没有云端副本。");
+      setView("timeline");
+    } catch {
+      setDataNotice("没有全部清空。本机记录仍保留着。");
+    } finally {
+      setIsClearing(false);
+    }
+  }
+
+  const tone = activeBranchId ?? selectedRecord?.state ?? "visit";
+  const ambientTone: AmbientSceneTone =
+    view === "home"
+      ? "home"
+      : view === "timeline" || view === "detail" || view === "data" || view === "poster"
+        ? "memory"
+        : tone === "visit"
+          ? "sit"
+          : tone;
+
+  return {
+    surfaceRef,
+    view,
+    setView,
+    tone,
+    ambientTone,
+    showOnboarding,
+    setShowOnboarding,
+    activeBranch,
+    activeBranchId,
+    selectedIntentId,
+    currentResponse,
+    draftText,
+    setDraftText,
+    records,
+    attachments,
+    activities,
+    attachmentsByCheckIn,
+    activitiesByCheckIn,
+    groupedRecords,
+    selectedRecord,
+    selectedAttachment,
+    selectedActivity,
+    lastSavedRecord,
+    lastSavedActivity,
+    processedPhoto,
+    photoPreviewUrl,
+    photoError,
+    storageError,
+    dataNotice,
+    todayPosterModel,
+    isProcessingPhoto,
+    isSaving,
+    isDeleting,
+    isExporting,
+    isClearing,
+    confirmDelete,
+    setConfirmDelete,
+    confirmClear,
+    setConfirmClear,
+    closeOnboarding,
+    goHome,
+    openBranch,
+    openPhotoFlow,
+    openActivityFlow,
+    closeActivityFlow,
+    chooseIntent,
+    preparePhoto,
+    closePhotoFlow,
+    remember,
+    rememberActivity,
+    openTimeline,
+    openRecord,
+    removeSelectedRecord,
+    exportData,
+    clearAllData,
+  };
+}
+
+export type DiaryController = ReturnType<typeof useDiaryController>;

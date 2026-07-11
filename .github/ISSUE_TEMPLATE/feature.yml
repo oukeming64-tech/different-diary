@@ -1,0 +1,25 @@
+name: 功能建议
+description: 提议符合非审判原则的新能力
+title: "[Feature] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: 想解决什么问题
+      description: 请从真实使用情境出发，而不是只描述一个按钮。
+    validations:
+      required: true
+  - type: textarea
+    id: approach
+    attributes:
+      label: 你想到的做法
+    validations:
+      required: true
+  - type: textarea
+    id: boundary
+    attributes:
+      label: 如何避免制造压力或破坏本机数据边界
+      description: 说明它为何不会变成评分、催促、登录墙或隐性上传。
+    validations:
+      required: true

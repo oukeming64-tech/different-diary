@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { readAppSource } from "./app-source.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -155,8 +156,8 @@ test("softens separators with low contrast or a fading gradient", async () => {
 
 test("preserves touch, focus, reduced motion and the ambient scene", async () => {
   const [layout, page, globals, motion, editorial] = await Promise.all([
-    read("app/layout.tsx"),
-    read("app/page.tsx"),
+    read("github-pages/main.tsx"),
+    readAppSource(),
     read("app/globals.css"),
     read("app/motion.css"),
     read("app/editorial.css"),
@@ -174,7 +175,7 @@ test("preserves touch, focus, reduced motion and the ambient scene", async () =>
   );
   assert.match(combinedStyles, /:focus-visible\b[^{}]*\{[^}]*outline\s*:/s);
   assert.match(combinedStyles, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
-  assert.match(layout, /import ["']\.\/motion\.css["']/);
+  assert.match(layout, /import ["']\.\.\/app\/motion\.css["']/);
   assert.match(page, /<AmbientScene\b/);
   assert.match(page, /\bmotion-stage\b/);
 });
@@ -182,14 +183,13 @@ test("preserves touch, focus, reduced motion and the ambient scene", async () =>
 test("does not introduce remote fonts or imagery", async () => {
   const sources = await Promise.all(
     [
-      "app/page.tsx",
       "app/ambient-scene.tsx",
       "app/globals.css",
       "app/motion.css",
       "app/editorial.css",
     ].map((file) => read(file)),
   );
-  const productVisualSource = sources.join("\n");
+  const productVisualSource = `${await readAppSource()}\n${sources.join("\n")}`;
 
   assert.doesNotMatch(
     productVisualSource,

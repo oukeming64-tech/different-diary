@@ -44,8 +44,8 @@ async function sourceFiles(relativeDirectory) {
 
 test("provides an installable, same-origin-only PWA shell", async () => {
   const requiredFiles = [
-    "app/manifest.ts",
     "app/pwa-register.tsx",
+    "github-pages/main.tsx",
     "public/sw.js",
     "public/manifest.webmanifest",
     "public/app-icon-192.png",
@@ -55,19 +55,19 @@ test("provides an installable, same-origin-only PWA shell", async () => {
     assert.equal(await exists(file), true, `${file} should exist`);
   }
 
-  const [manifest, registration, worker, layout] = await Promise.all([
-    read("app/manifest.ts"),
+  const [manifest, registration, worker, entry] = await Promise.all([
+    read("public/manifest.webmanifest"),
     read("app/pwa-register.tsx"),
     read("public/sw.js"),
-    read("app/layout.tsx"),
+    read("github-pages/main.tsx"),
   ]);
 
-  assert.match(manifest, /name:\s*["']不一样的日记["']/);
-  assert.match(manifest, /start_url:\s*["']\/["']/);
-  assert.match(manifest, /scope:\s*["']\/["']/);
-  assert.match(manifest, /display:\s*["']standalone["']/);
-  assert.match(manifest, /\/app-icon-192\.png/);
-  assert.match(manifest, /\/app-icon-512\.png/);
+  assert.match(manifest, /"name":\s*"不一样的日记"/);
+  assert.match(manifest, /"start_url":\s*"\.\/"/);
+  assert.match(manifest, /"scope":\s*"\.\/"/);
+  assert.match(manifest, /"display":\s*"standalone"/);
+  assert.match(manifest, /\.\/app-icon-192\.png/);
+  assert.match(manifest, /\.\/app-icon-512\.png/);
   assert.deepEqual(await pngDimensions("public/app-icon-192.png"), {
     width: 192,
     height: 192,
@@ -82,7 +82,7 @@ test("provides an installable, same-origin-only PWA shell", async () => {
   assert.match(registration, /PWA_UPDATE_READY_EVENT/);
   assert.match(registration, /waiting\.postMessage\(\{ type: ["']SKIP_WAITING["'] \}\)/);
   assert.match(registration, /稍后再说/);
-  assert.match(layout, /<PwaRegister\s*\/>/);
+  assert.match(entry, /<PwaRegister\s*\/>/);
 
   assert.match(worker, /self\.addEventListener\(["']install["']/);
   assert.match(worker, /self\.addEventListener\(["']activate["']/);
@@ -102,7 +102,6 @@ test("keeps the stage 1 local core serverless and free of auth, AI and telemetry
   const sources = await Promise.all(runtimeFiles.map((file) => read(file)));
   const runtimeSource = sources.join("\n");
   const packageJson = JSON.parse(await read("package.json"));
-  const hosting = JSON.parse(await read(".openai/hosting.json"));
   const dependencyNames = Object.keys({
     ...packageJson.dependencies,
     ...packageJson.devDependencies,
@@ -110,8 +109,8 @@ test("keeps the stage 1 local core serverless and free of auth, AI and telemetry
 
   assert.equal(await exists("app/api"), false, "stage 1 must not add API routes");
   assert.equal(await exists("pages/api"), false, "stage 1 must not add API routes");
-  assert.equal(hosting.d1, null, "stage 1 must not provision a server database");
-  assert.equal(hosting.r2, null, "stage 1 must not provision cloud storage");
+  assert.equal(await exists(".openai/hosting.json"), false);
+  assert.equal(await exists("worker/index.ts"), false);
 
   assert.doesNotMatch(
     runtimeSource,
