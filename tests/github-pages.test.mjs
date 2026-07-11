@@ -25,6 +25,8 @@ test("builds a scoped static GitHub Pages experience", async () => {
     "vite.pages.config.ts",
     ".github/workflows/pages.yml",
     "public/manifest.webmanifest",
+    "public/download.html",
+    "scripts/build-standalone-html.mjs",
   ]) {
     assert.equal(await exists(file), true, `${file} should exist`);
   }
@@ -40,6 +42,7 @@ test("builds a scoped static GitHub Pages experience", async () => {
     ]);
 
   assert.match(packageJson, /"build:pages"/);
+  assert.match(packageJson, /build-standalone-html\.mjs/);
   assert.match(config, /base:\s*["']\/different-diary\/["']/);
   assert.match(workflow, /actions\/deploy-pages@v4/);
   assert.match(workflow, /npm run build:pages/);
