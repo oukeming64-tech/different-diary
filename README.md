@@ -10,7 +10,7 @@
 
 **反内卷。**
 
-[在线预览（当前需要站点访问权限）](https://jianfei-paipai-le.kemo64.chatgpt.site/) · [查看贡献说明](CONTRIBUTING.md) · [报告安全问题](SECURITY.md)
+[在线预览（当前需要站点访问权限）](https://jianfei-paipai-le.kemo64.chatgpt.site/) · [一键部署自己的版本](docs/10-线上部署.md) · [查看贡献说明](CONTRIBUTING.md) · [报告安全问题](SECURITY.md)
 
 ![不一样的日记：你这会儿，想从哪儿说起？](public/og.png)
 
@@ -38,6 +38,31 @@
 
 手机浏览器可以把页面添加到主屏幕，之后像普通 App 一样打开。
 
+## 如何把它装成 PWA
+
+PWA 可以理解成“能装到桌面的网页”：不用经过应用商店，也不用下载安装包。先用浏览器打开网址，再把它添加到主屏幕，以后就能像普通 App 一样从桌面图标进入。
+
+### iPhone / iPad
+
+1. 一定要用 **Safari** 打开网址。
+2. 点底部工具栏的“分享”按钮；如果没看到，先点“更多”，再点“分享”。
+3. 在菜单里找到“添加到主屏幕”。
+4. 打开“作为网页 App 打开”，然后点“添加”。
+
+### Android 手机
+
+1. 用 **Chrome** 打开网址。
+2. 点右上角的三个点。
+3. 选择“添加到主屏幕”，再点“安装”。有些手机会直接显示“安装应用”。
+
+### 电脑
+
+用 Chrome 打开网址，点右上角三个点，进入“投放、保存和分享”，选择“将网页安装为应用”。部分版本也会直接在地址栏右侧显示安装图标。
+
+第一次打开仍需要网络。页面成功加载后，应用外壳可以离线打开；记录保存在安装时所用的浏览器和设备里，清理浏览器数据或卸载前请先导出需要保留的内容。
+
+系统更新后，菜单名称可能略有变化。可以对照 [Apple 的官方说明](https://support.apple.com/guide/iphone/iphea86e5236/ios) 和 [Chrome 的官方说明](https://support.google.com/chrome/answer/9658361/use-progressive-web-apps-android)。
+
 ## 本地开发
 
 需要 Node.js 22.15 或更高版本。
@@ -53,6 +78,14 @@ npm run dev
 npm run lint
 npm test
 ```
+
+## 部署自己的线上版本
+
+不需要准备服务器，也不需要把 OpenRouter Key 写进部署环境。可以点击下面的按钮，把这个项目复制到自己的 GitHub，并部署到自己的 Cloudflare 账户：
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/oukeming64-tech/different-diary)
+
+更详细的逐步说明、自动部署设置和常见问题见 [`docs/10-线上部署.md`](docs/10-线上部署.md)。
 
 ## 项目原则
 
