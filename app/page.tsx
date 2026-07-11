@@ -21,6 +21,7 @@ import {
   PenLine,
   RotateCcw,
   ShieldCheck,
+  Sparkles,
   Trash2,
   Utensils,
   X,
@@ -33,6 +34,7 @@ import {
 } from "./ambient-scene";
 import { ActivityFlow } from "./activity-flow";
 import { ActivityReward } from "./activity-reward";
+import { AIFlow } from "./ai-flow";
 import { PhotoFlow } from "./photo-flow";
 
 import {
@@ -71,6 +73,7 @@ type View =
   | "home"
   | "branch"
   | "activity"
+  | "ai"
   | "photo"
   | "reply"
   | "write"
@@ -459,8 +462,12 @@ export default function Home() {
     return identity;
   }
 
-  async function remember(userText: string | null) {
-    if (!activeBranchId || !selectedIntentId || !currentResponse) return;
+  async function remember(
+    userText: string | null,
+    responseOverride?: LocalResponse,
+  ) {
+    const response = responseOverride ?? currentResponse;
+    if (!activeBranchId || !selectedIntentId || !response) return;
     setIsSaving(true);
     setStorageError(null);
     try {
@@ -472,8 +479,8 @@ export default function Home() {
             state: activeBranchId,
             intentId: selectedIntentId,
             userText: userText?.trim() || null,
-            responseKey: currentResponse.key,
-            responseText: currentResponse.text,
+            responseKey: response.key,
+            responseText: response.text,
           })
         : null;
       const record = savedPhoto
@@ -483,8 +490,8 @@ export default function Home() {
             state: activeBranchId,
             intentId: selectedIntentId,
             userText: userText?.trim() || null,
-            responseKey: currentResponse.key,
-            responseText: currentResponse.text,
+            responseKey: response.key,
+            responseText: response.text,
           });
       setRecords((current) => [record, ...current]);
       if (savedPhoto) {
@@ -770,6 +777,18 @@ export default function Home() {
           />
         )}
 
+        {view === "ai" && activeBranch && currentResponse && (
+          <AIFlow
+            busySaving={isSaving}
+            intentLabel={intentLabel(activeBranch.id, selectedIntentId ?? "")}
+            localResponse={currentResponse}
+            onCancel={() => setView("reply")}
+            onSave={(userText, response) => void remember(userText, response)}
+            state={activeBranch.id}
+            stateLabel={activeBranch.shortLabel}
+          />
+        )}
+
         {view === "branch" && activeBranch && (
           <div className="screen branch-screen screen-enter motion-branch">
             <CalmBack label="回到四个入口" onClick={goHome} />
@@ -844,6 +863,15 @@ export default function Home() {
               >
                 <span className="action-icon"><PenLine size={18} /></span>
                 <span><strong>写两句再记住</strong><small>从哪一句开始都可以</small></span>
+                <ChevronRight size={17} aria-hidden="true" />
+              </button>
+              <button
+                className="memory-action-card hairline-row ai-utility"
+                onClick={() => setView("ai")}
+                type="button"
+              >
+                <span className="action-icon"><Sparkles size={18} /></span>
+                <span><strong>想让 AI 再听听</strong><small>由你连接 Key，发送前再确认</small></span>
                 <ChevronRight size={17} aria-hidden="true" />
               </button>
               <button className="quiet-action" onClick={goHome} type="button">

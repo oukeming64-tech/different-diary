@@ -69,6 +69,8 @@ test("makes every movement detail optional and keeps scoring out", async () => {
   assert.match(copy, /每一项都能跳过/);
   assert.match(copy, /不填也没关系/);
   assert.match(copy, /不算完成度/);
+  assert.match(presentation, /details\.length \? details\.join\(" · "\) : "动过了"/);
+  assert.doesNotMatch(presentation, /动过了，没留下细节/);
   assert.doesNotMatch(
     copy,
     /(?:连续打卡|断签|排行榜|打败.{0,8}用户|补偿运动|热量赤字|失败率)/,

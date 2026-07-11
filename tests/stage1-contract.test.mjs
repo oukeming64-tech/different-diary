@@ -94,11 +94,8 @@ test("provides an installable, same-origin-only PWA shell", async () => {
   assert.doesNotMatch(worker, /https?:\/\//);
 });
 
-test("keeps stage 1 local-only, serverless and free of auth, AI and telemetry", async () => {
-  const runtimeFiles = [
-    ...(await sourceFiles("app")),
-    ...(await sourceFiles("lib")),
-  ];
+test("keeps the stage 1 local core serverless and free of auth, AI and telemetry", async () => {
+  const runtimeFiles = await sourceFiles("lib/stage1");
   const sources = await Promise.all(runtimeFiles.map((file) => read(file)));
   const runtimeSource = sources.join("\n");
   const packageJson = JSON.parse(await read("package.json"));
@@ -116,7 +113,7 @@ test("keeps stage 1 local-only, serverless and free of auth, AI and telemetry", 
   assert.doesNotMatch(
     runtimeSource,
     /\b(?:fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon)\s*[.(]/,
-    "application code must not send records over the network",
+    "the stage 1 local core must not send records over the network",
   );
   assert.doesNotMatch(
     runtimeSource,

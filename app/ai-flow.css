@@ -1,0 +1,235 @@
+.ai-flow {
+  color: var(--c-ink);
+  margin-inline: auto;
+  max-inline-size: 27rem;
+  min-block-size: inherit;
+  padding: 1.5rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom));
+}
+
+.ai-flow button,
+.ai-flow input,
+.ai-flow textarea {
+  color: inherit;
+  font: inherit;
+}
+
+.ai-flow button {
+  cursor: pointer;
+}
+
+.ai-flow button:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.ai-flow button:focus-visible,
+.ai-flow input:focus-visible,
+.ai-flow textarea:focus-visible {
+  outline: 3px solid var(--c-focus, #516f79);
+  outline-offset: 3px;
+}
+
+.ai-flow__backbar {
+  align-items: center;
+  border-bottom: 1px solid var(--c-line);
+  display: flex;
+  justify-content: space-between;
+  min-block-size: 2.75rem;
+}
+
+.ai-flow__backbar button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 650;
+  gap: 0.4rem;
+  padding: 0;
+}
+
+.ai-flow__backbar > span {
+  color: var(--c-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+}
+
+.ai-flow__heading {
+  margin-block: 2.25rem 1.5rem;
+}
+
+.ai-flow__mark {
+  align-items: center;
+  color: #776a83;
+  display: inline-flex;
+  margin-bottom: 1rem;
+}
+
+.ai-flow__heading > p {
+  color: #776a83;
+  font-size: 0.78rem;
+  font-weight: 680;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.45rem;
+}
+
+.ai-flow__heading h2 {
+  font-family: var(--font-emotion, "Songti SC", "STSong", serif);
+  font-size: clamp(1.75rem, 7.5vw, 2.2rem);
+  font-weight: 560;
+  letter-spacing: -0.045em;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.ai-flow__connect,
+.ai-flow__conversation,
+.ai-flow__result {
+  border-block: 1px solid var(--c-line-strong);
+  padding-block: 1rem;
+}
+
+.ai-flow__connect > div:first-child {
+  align-items: center;
+  display: flex;
+  gap: 0.55rem;
+}
+
+.ai-flow__connect h3 {
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.ai-flow__connect > p,
+.ai-flow__consent {
+  color: var(--c-muted);
+  font-size: 0.76rem;
+  line-height: 1.65;
+}
+
+.ai-flow__connect label,
+.ai-flow__message {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-block: 1rem;
+}
+
+.ai-flow__connect label > span,
+.ai-flow__message > span {
+  font-size: 0.78rem;
+  font-weight: 680;
+}
+
+.ai-flow__connect input,
+.ai-flow__message textarea {
+  background: rgba(255, 252, 247, 0.72);
+  border: 1px solid var(--c-line-strong);
+  border-radius: 0.35rem;
+  inline-size: 100%;
+}
+
+.ai-flow__connect input {
+  min-block-size: 3rem;
+  padding-inline: 0.8rem;
+}
+
+.ai-flow__message textarea {
+  line-height: 1.7;
+  min-block-size: 8.5rem;
+  padding: 0.8rem;
+  resize: vertical;
+}
+
+.ai-flow__primary {
+  align-items: center;
+  background: #3f342d;
+  border: 1px solid #3f342d;
+  border-radius: 0.4rem;
+  color: #fffaf3 !important;
+  display: inline-flex;
+  font-weight: 680;
+  gap: 0.5rem;
+  justify-content: center;
+  min-block-size: 3rem;
+  padding: 0.65rem 0.9rem;
+  width: 100%;
+}
+
+.ai-flow__connected {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.ai-flow__connected span {
+  align-items: center;
+  color: #5f7e69;
+  display: inline-flex;
+  font-size: 0.76rem;
+  font-weight: 680;
+  gap: 0.35rem;
+}
+
+.ai-flow__connected button,
+.ai-flow__result-actions > button:last-child {
+  background: transparent;
+  border: 0;
+  color: var(--c-muted);
+  font-size: 0.75rem;
+  text-decoration: underline;
+  text-underline-offset: 0.24rem;
+}
+
+.ai-flow__notice {
+  background: linear-gradient(90deg, rgba(169, 101, 71, 0.1), transparent 90%);
+  border-left: 2px solid rgba(121, 81, 62, 0.64);
+  color: #79513e;
+  font-size: 0.78rem;
+  line-height: 1.65;
+  margin: 1rem 0 0;
+  padding: 0.75rem 0.8rem;
+}
+
+.ai-flow__result {
+  margin-top: 1.25rem;
+}
+
+.ai-flow__result > p {
+  color: #776a83;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.ai-flow__result blockquote {
+  font-family: var(--font-emotion, "Songti SC", "STSong", serif);
+  font-size: 1.02rem;
+  line-height: 1.85;
+  margin: 0.75rem 0;
+}
+
+.ai-flow__result small {
+  color: var(--c-muted);
+  display: block;
+  font-size: 0.7rem;
+  overflow-wrap: anywhere;
+}
+
+.ai-flow__result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-flow *,
+  .ai-flow *::before,
+  .ai-flow *::after {
+    animation: none !important;
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}

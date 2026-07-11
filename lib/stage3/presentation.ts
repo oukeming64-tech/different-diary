@@ -37,5 +37,5 @@ export function formatActivitySummary(
     activity.distanceKm ? `${activity.distanceKm.toLocaleString("zh-CN")} 公里` : null,
   ].filter(Boolean);
 
-  return details.length ? details.join(" · ") : "动过了，没留下细节";
+  return details.length ? details.join(" · ") : "动过了";
 }

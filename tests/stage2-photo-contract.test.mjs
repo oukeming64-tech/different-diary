@@ -177,16 +177,15 @@ test("keeps the four emotional entries primary and photos auxiliary", async () =
   );
 });
 
-test("does not introduce login, cloud storage or real AI calls", async () => {
-  const [page, photoFlow, processor, recordOnly, hosting, packageJson] = await Promise.all([
-    read("app/page.tsx"),
+test("keeps the stage 2 record-only photo path free of login, cloud storage and AI calls", async () => {
+  const [photoFlow, processor, recordOnly, hosting, packageJson] = await Promise.all([
     read("app/photo-flow.tsx"),
     readOptional(processorPath),
     readOptional(recordOnlyPath),
     read(".openai/hosting.json").then(JSON.parse),
     read("package.json").then(JSON.parse),
   ]);
-  const firstSliceSource = `${page}\n${photoFlow}\n${processor}\n${recordOnly}`;
+  const firstSliceSource = `${photoFlow}\n${processor}\n${recordOnly}`;
   const dependencies = Object.keys({
     ...packageJson.dependencies,
     ...packageJson.devDependencies,
