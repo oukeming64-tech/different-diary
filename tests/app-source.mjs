@@ -9,6 +9,8 @@ const appFiles = [
   "app/diary/conversation-screens.tsx",
   "app/diary/memory-screens.tsx",
   "app/diary/use-diary-controller.ts",
+  "app/diary/use-local-diary-library.ts",
+  "app/diary/use-photo-draft.ts",
   "app/diary/shared.tsx",
 ];
 

@@ -9,7 +9,9 @@ const budgets = new Map([
   ["app/diary/home-screen.tsx", 180],
   ["app/diary/conversation-screens.tsx", 280],
   ["app/diary/memory-screens.tsx", 320],
-  ["app/diary/use-diary-controller.ts", 550],
+  ["app/diary/use-diary-controller.ts", 420],
+  ["app/diary/use-local-diary-library.ts", 180],
+  ["app/diary/use-photo-draft.ts", 80],
   ["app/diary/model.ts", 180],
   ["app/diary/shared.tsx", 100],
 ]);

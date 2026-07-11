@@ -49,4 +49,9 @@ test("builds a scoped static GitHub Pages experience", async () => {
   assert.match(manifest, /"start_url":\s*"\.\/"/);
   assert.match(registration, /document\.baseURI/);
   assert.match(worker, /self\.registration\.scope/);
+  assert.match(worker, /buildAssets/);
+  assert.match(worker, /shellHtml\.matchAll/);
+  assert.match(worker, /responseForCache/);
+  assert.match(worker, /"vary"/);
+  assert.doesNotMatch(worker, /_next\/static/);
 });
