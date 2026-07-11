@@ -90,6 +90,31 @@ npm run lint
 npm test
 ```
 
+## 想接手继续开发
+
+想把项目拿走继续做，可以先在 GitHub 右上角点 **Fork**，把仓库复制到自己的账号，再把自己的副本下载到电脑：
+
+```bash
+git clone https://github.com/你的用户名/different-diary.git
+cd different-diary
+npm ci
+npm run dev
+```
+
+主要界面和交互在 [`app/`](app/)；本机文字与数据库在 [`lib/stage1/`](lib/stage1/)，照片、运动、可选 AI 和今日海报依次在 [`lib/stage2/`](lib/stage2/)、[`lib/stage3/`](lib/stage3/)、[`lib/stage4/`](lib/stage4/) 和 [`lib/poster/`](lib/poster/)；回归测试在 [`tests/`](tests/)，产品、技术和架构说明在 [`docs/`](docs/)。GitHub Pages 使用 [`github-pages/`](github-pages/) 作为静态入口，并由 [`vite.pages.config.ts`](vite.pages.config.ts) 完成构建。
+
+每次修改后，至少运行：
+
+```bash
+npm run lint
+npm test
+npm run build:pages
+```
+
+在自己的 GitHub 仓库中启用 Actions，并在 **Settings → Pages** 里选择 **GitHub Actions**，之后把通过检查的代码合并到 `main`，现有工作流就会自动发布网页和单文件下载版。如果更改了仓库名，需要同时修改 [`vite.pages.config.ts`](vite.pages.config.ts) 中的 `base`、[`scripts/build-standalone-html.mjs`](scripts/build-standalone-html.mjs) 中的 `basePath`，以及 README、下载页和分享图里的公开链接。
+
+接手开发时请继续守住三个边界：无登录、无 Key 的基础路径必须可用；照片“只记录”不能调用模型或上传；数据库结构或导出格式发生变化时，要为已有本机记录提供迁移和回归测试。准备贡献回原项目时，再阅读 [`CONTRIBUTING.md`](CONTRIBUTING.md) 和 [`docs/05-开放扩展接口规范.md`](docs/05-开放扩展接口规范.md)。
+
 ## 项目原则
 
 - 诚实记录不会受到惩罚。
