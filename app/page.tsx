@@ -35,6 +35,10 @@ import {
 import { ActivityFlow } from "./activity-flow";
 import { ActivityReward } from "./activity-reward";
 import { AIFlow } from "./ai-flow";
+import {
+  OnboardingGuide,
+  ONBOARDING_PREFERENCE_KEY,
+} from "./onboarding-guide";
 import { PhotoFlow } from "./photo-flow";
 
 import {
@@ -265,6 +269,7 @@ export default function Home() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [dataNotice, setDataNotice] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const activeBranch = branchFor(activeBranchId);
   const selectedRecord = records.find((record) => record.id === selectedRecordId);
@@ -313,6 +318,15 @@ export default function Home() {
         setActivities(localActivities);
         setStorageReady(true);
         setStorageError(null);
+        if (localRecords.length === 0) {
+          try {
+            if (window.localStorage.getItem(ONBOARDING_PREFERENCE_KEY) !== "done") {
+              setShowOnboarding(true);
+            }
+          } catch {
+            setShowOnboarding(true);
+          }
+        }
       } catch (error) {
         if (!active) return;
         setStorageReady(false);
@@ -363,6 +377,15 @@ export default function Home() {
   function goHome() {
     resetConversation();
     setView("home");
+  }
+
+  function closeOnboarding() {
+    try {
+      window.localStorage.setItem(ONBOARDING_PREFERENCE_KEY, "done");
+    } catch {
+      // The guide is a non-authoritative UI preference; storage failure is safe.
+    }
+    setShowOnboarding(false);
   }
 
   function openBranch(id: CheckInState) {
@@ -649,6 +672,7 @@ export default function Home() {
         className="app-surface motion-surface"
         data-tone={tone}
         data-view={view}
+        aria-hidden={showOnboarding || undefined}
         aria-live="polite"
         ref={surfaceRef}
       >
@@ -675,6 +699,19 @@ export default function Home() {
               </h1>
               <p>挑一句顺口的就行。</p>
             </div>
+
+            <button
+              className="onboarding-trigger motion-rise"
+              onClick={() => setShowOnboarding(true)}
+              type="button"
+            >
+              <span aria-hidden="true"><Sparkles size={18} /></span>
+              <span>
+                <strong>第一次来？30 秒看看怎么用</strong>
+                <small>也会告诉你，可选 AI 藏在哪里</small>
+              </span>
+              <ChevronRight size={17} aria-hidden="true" />
+            </button>
 
             {storageError && (
               <div className="inline-notice" role="status">
@@ -871,7 +908,10 @@ export default function Home() {
                 type="button"
               >
                 <span className="action-icon"><Sparkles size={18} /></span>
-                <span><strong>想让 AI 再听听</strong><small>由你连接 Key，发送前再确认</small></span>
+                <span>
+                  <strong>想让 AI 再听听 <span className="ai-discovery-label">可选 AI</span></strong>
+                  <small>由你连接 Key，发送前再确认</small>
+                </span>
                 <ChevronRight size={17} aria-hidden="true" />
               </button>
               <button className="quiet-action" onClick={goHome} type="button">
@@ -1173,6 +1213,13 @@ export default function Home() {
           </div>
         )}
       </section>
+      {showOnboarding && (
+        <OnboardingGuide
+          onClose={closeOnboarding}
+          onComplete={closeOnboarding}
+          open
+        />
+      )}
     </main>
   );
 }

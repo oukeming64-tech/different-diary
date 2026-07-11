@@ -48,7 +48,7 @@ test("server-renders the stage 1 local-first home", async () => {
   assert.doesNotMatch(html, /阶段 0 原型|不会保存你的选择/);
 });
 
-test("keeps stage 1 device-local and free of server capabilities", async () => {
+test("keeps product data device-local and free of server capabilities", async () => {
   const [page, hosting, packageJson] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
@@ -62,7 +62,17 @@ test("keeps stage 1 device-local and free of server capabilities", async () => {
   assert.match(page, /createLocalExportJson/);
   assert.doesNotMatch(
     page,
-    /fetch\(|axios|localStorage|sessionStorage|signIn|signOut|AIProvider|SyncAdapter/,
+    /fetch\(|axios|sessionStorage|signIn|signOut|AIProvider|SyncAdapter/,
+  );
+  const localPreferenceCalls = [
+    ...page.matchAll(/localStorage\.(?:getItem|setItem)\(([^)]*)\)/g),
+  ];
+  assert.equal(localPreferenceCalls.length, 2);
+  assert.ok(
+    localPreferenceCalls.every((match) =>
+      match[1]?.includes("ONBOARDING_PREFERENCE_KEY"),
+    ),
+    "localStorage may only hold the dismissed onboarding preference",
   );
   assert.match(packageJson, /"dexie"/);
   assert.doesNotMatch(packageJson, /drizzle|prisma|supabase|firebase/i);

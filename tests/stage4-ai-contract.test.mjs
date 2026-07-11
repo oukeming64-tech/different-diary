@@ -21,6 +21,8 @@ test("keeps the first stage 4 slice explicit and optional", async () => {
   for (const file of [
     "app/ai-flow.tsx",
     "app/ai-flow.css",
+    "app/onboarding-guide.tsx",
+    "app/onboarding-guide.css",
     "lib/stage4/types.ts",
     "lib/stage4/openrouter.ts",
     "lib/stage4/companion.ts",
@@ -38,6 +40,31 @@ test("keeps the first stage 4 slice explicit and optional", async () => {
   assert.match(flow, /照片、历史记录和身体资料不会一起发送/);
   assert.match(flow, /Key 不会写进记录，也不会跟着导出/);
   assert.match(flow, /离开或刷新后，需要重新连接/);
+});
+
+test("shows new users how to reach optional AI without making it a core entry", async () => {
+  const [page, guide] = await Promise.all([
+    read("app/page.tsx"),
+    read("app/onboarding-guide.tsx"),
+  ]);
+
+  assert.match(page, /localRecords\.length === 0/);
+  assert.match(page, /ONBOARDING_PREFERENCE_KEY/);
+  assert.match(page, /第一次来？30 秒看看怎么用/);
+  assert.match(page, /可选 AI 藏在哪里/);
+  assert.match(page, /ai-discovery-label/);
+  assert.match(guide, /aria-modal="true"/);
+  assert.match(guide, /先挑一句，像你现在就好/);
+  assert.match(guide, /先听一句本机回应/);
+  assert.match(guide, /想多说一点，再找 AI/);
+  assert.match(guide, /回应页靠下的位置 · 可选 AI/);
+  assert.match(guide, /知道了，去选一句/);
+  assert.match(page, /localStorage\.setItem\(ONBOARDING_PREFERENCE_KEY, "done"\)/);
+  assert.doesNotMatch(guide, /OPENROUTER|api[_-]?key|model[_-]?key/i);
+
+  const stateGrid = page.indexOf('className="state-grid state-index"');
+  const aiAction = page.indexOf('className="memory-action-card hairline-row ai-utility"');
+  assert.ok(stateGrid >= 0 && aiAction > stateGrid);
 });
 
 test("keeps keys out of persistent product data and build-time variables", async () => {
