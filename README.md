@@ -40,7 +40,7 @@
 
 ## 本地开发
 
-需要 Node.js 22.13 或更高版本。
+需要 Node.js 22.15 或更高版本。
 
 ```bash
 npm install
