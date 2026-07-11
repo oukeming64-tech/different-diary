@@ -64,9 +64,11 @@ export function PwaRegister() {
 
     const register = async () => {
       try {
+        const serviceWorkerUrl = new URL("sw.js", document.baseURI);
+        const serviceWorkerScope = new URL("./", serviceWorkerUrl);
         const nextRegistration = await navigator.serviceWorker.register(
-          "/sw.js",
-          { scope: "/" },
+          serviceWorkerUrl.pathname,
+          { scope: serviceWorkerScope.pathname },
         );
         if (!disposed) watchRegistration(nextRegistration);
       } catch {

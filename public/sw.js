@@ -1,11 +1,14 @@
 const CACHE_PREFIX = "jianfei-paipai-shell";
 const CACHE_VERSION = "stage3-activity-reward-v1";
 const SHELL_CACHE = `${CACHE_PREFIX}-${CACHE_VERSION}`;
+const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, "");
+const scopedPath = (path) => `${SCOPE_PATH}${path}`;
+const APP_ROOT = scopedPath("/");
 const APP_SHELL = [
-  "/",
-  "/manifest.webmanifest",
-  "/app-icon-192.png",
-  "/app-icon-512.png",
+  APP_ROOT,
+  scopedPath("/manifest.webmanifest"),
+  scopedPath("/app-icon-192.png"),
+  scopedPath("/app-icon-512.png"),
 ];
 const LOCAL_ONLY_PROTOCOLS = new Set(["blob:", "data:"]);
 
@@ -54,10 +57,10 @@ async function networkFirstShell(request) {
 
   try {
     const response = await fetch(request);
-    if (response.ok) await cache.put("/", response.clone());
+    if (response.ok) await cache.put(APP_ROOT, response.clone());
     return response;
   } catch {
-    return (await cache.match("/")) ?? Response.error();
+    return (await cache.match(APP_ROOT)) ?? Response.error();
   }
 }
 
@@ -84,15 +87,15 @@ self.addEventListener("fetch", (event) => {
   // Cache only the single-page app shell and build-owned assets. IndexedDB
   // records, local photo Blobs, provider responses, and future server data stay
   // outside Cache Storage by construction.
-  if (request.mode === "navigate" && url.pathname === "/") {
+  if (request.mode === "navigate" && url.pathname === APP_ROOT) {
     event.respondWith(networkFirstShell(request));
     return;
   }
 
   if (
     APP_SHELL.includes(url.pathname) ||
-    url.pathname.startsWith("/assets/") ||
-    url.pathname.startsWith("/_next/static/")
+    url.pathname.startsWith(scopedPath("/assets/")) ||
+    url.pathname.startsWith(scopedPath("/_next/static/"))
   ) {
     event.respondWith(cacheFirstStatic(request));
   }

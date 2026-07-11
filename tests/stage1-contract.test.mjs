@@ -47,6 +47,7 @@ test("provides an installable, same-origin-only PWA shell", async () => {
     "app/manifest.ts",
     "app/pwa-register.tsx",
     "public/sw.js",
+    "public/manifest.webmanifest",
     "public/app-icon-192.png",
     "public/app-icon-512.png",
   ];
@@ -77,6 +78,7 @@ test("provides an installable, same-origin-only PWA shell", async () => {
   });
 
   assert.match(registration, /navigator\.serviceWorker\.register/);
+  assert.match(registration, /document\.baseURI/);
   assert.match(registration, /PWA_UPDATE_READY_EVENT/);
   assert.match(registration, /waiting\.postMessage\(\{ type: ["']SKIP_WAITING["'] \}\)/);
   assert.match(registration, /稍后再说/);
@@ -88,7 +90,8 @@ test("provides an installable, same-origin-only PWA shell", async () => {
   assert.match(worker, /request\.method !== ["']GET["']/);
   assert.match(worker, /url\.origin !== self\.location\.origin/);
   assert.match(worker, /APP_SHELL\.includes\(url\.pathname\)/);
-  assert.match(worker, /url\.pathname\.startsWith\(["']\/assets\/["']\)/);
+  assert.match(worker, /self\.registration\.scope/);
+  assert.match(worker, /url\.pathname\.startsWith\(scopedPath\(["']\/assets\/["']\)\)/);
   assert.doesNotMatch(worker, /cache\.put\([^\n]*\/api\//);
   assert.doesNotMatch(worker, /\bindexedDB\s*[.(]/);
   assert.doesNotMatch(worker, /https?:\/\//);
