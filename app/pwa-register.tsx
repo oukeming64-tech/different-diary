@@ -33,6 +33,7 @@ export function PwaRegister() {
 
   useEffect(() => {
     if (process.env.NODE_ENV !== "production") return;
+    if (document.documentElement.dataset.standaloneDownload === "true") return;
     if (!("serviceWorker" in navigator)) return;
 
     let disposed = false;
