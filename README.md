@@ -10,7 +10,7 @@
 
 **反内卷。**
 
-[在线预览（当前需要站点访问权限）](https://jianfei-paipai-le.kemo64.chatgpt.site/) · [一键部署自己的版本](docs/10-线上部署.md) · [查看贡献说明](CONTRIBUTING.md) · [报告安全问题](SECURITY.md)
+[直接在线体验](https://oukeming64-tech.github.io/different-diary/) · [查看贡献说明](CONTRIBUTING.md) · [报告安全问题](SECURITY.md)
 
 ![不一样的日记：你这会儿，想从哪儿说起？](public/og.png)
 
@@ -31,7 +31,7 @@
 
 ## 使用
 
-1. 有站点访问权限时打开[在线预览](https://jianfei-paipai-le.kemo64.chatgpt.site/)，也可以按下方说明在本地运行；进入后从首页挑一句最接近当前状态的话。
+1. 打开[在线体验页](https://oukeming64-tech.github.io/different-diary/)，从首页挑一句最接近当前状态的话。
 2. 选择这会儿希望怎样被陪伴，读完回应后可以直接离开，也可以留下文字、照片或运动记录。
 3. 从首页“翻翻最近”回看和管理本机数据；有了当天记录后，也可以生成今日海报。
 4. 想让 AI 再听听时，从回应页进入可选 AI，自行连接 OpenRouter Key，并在发送前再次确认。
@@ -78,14 +78,6 @@ npm run dev
 npm run lint
 npm test
 ```
-
-## 部署自己的线上版本
-
-不需要准备服务器，也不需要把 OpenRouter Key 写进部署环境。可以点击下面的按钮，把这个项目复制到自己的 GitHub，并部署到自己的 Cloudflare 账户：
-
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/oukeming64-tech/different-diary)
-
-更详细的逐步说明、自动部署设置和常见问题见 [`docs/10-线上部署.md`](docs/10-线上部署.md)。
 
 ## 项目原则
 
