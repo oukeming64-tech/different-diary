@@ -30,7 +30,7 @@ test("server-renders the stage 1 local-first home", async () => {
 
   const html = await response.text();
   assert.match(html, /<html lang="zh-CN">/i);
-  assert.match(html, /<title>减肥拍拍乐｜先接住你，再说别的<\/title>/i);
+  assert.match(html, /<title>不一样的日记｜先接住你，再说别的<\/title>/i);
   assert.match(html, /你这会儿，/);
   assert.match(html, /想从哪儿说起？/);
   assert.match(html, /我想吃点东西/);
@@ -38,7 +38,7 @@ test("server-renders the stage 1 local-first home", async () => {
   assert.match(html, /我刚练完，很累/);
   assert.match(html, /没什么，只是来坐坐/);
   assert.match(html, /翻翻最近/);
-  assert.match(html, /只用本机/);
+  assert.match(html, /不一样的日记/);
   const body = html.slice(
     html.indexOf("<body>"),
     html.indexOf("</body>") + "</body>".length,

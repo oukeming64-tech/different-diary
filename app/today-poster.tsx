@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Download, Image as ImageIcon, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Download, Image as ImageIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
@@ -52,7 +52,7 @@ export function TodayPoster({ model, onBack }: TodayPosterProps) {
     ].join("-");
     const link = document.createElement("a");
     link.href = posterUrl;
-    link.download = `减肥拍拍乐-今日海报-${date}.png`;
+    link.download = `不一样的日记-今日海报-${date}.png`;
     link.click();
   }
 
@@ -62,13 +62,13 @@ export function TodayPoster({ model, onBack }: TodayPosterProps) {
         <button onClick={onBack} type="button">
           <ArrowLeft size={18} aria-hidden="true" />回到首页
         </button>
-        <span>只用本机记录</span>
+        <span>今日海报</span>
       </header>
 
       <header className="today-poster__heading">
         <p>把今天轻轻放在一张纸上</p>
         <h2>生成今天的海报</h2>
-        <span>只使用今天保存过的状态和选择，不放照片、原话、AI 回应或身体数据。</span>
+        <span>只使用今天保存过的状态和选择。海报在当前设备生成，不会上传，也不放照片、原话、AI 回应或身体数据。</span>
       </header>
 
       {!model.moments.length ? (
@@ -96,9 +96,6 @@ export function TodayPoster({ model, onBack }: TodayPosterProps) {
                 正在把今天排成一张海报…
               </div>
             )}
-            <figcaption>
-              <ShieldCheck size={15} aria-hidden="true" />海报在这台设备上生成，没有上传
-            </figcaption>
           </figure>
 
           {error && <p className="today-poster__error" role="alert">{error}</p>}

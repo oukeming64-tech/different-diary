@@ -1,7 +1,16 @@
 {
-  "name": "jianfei-paipai-local-first",
+  "name": "different-diary",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oukeming64-tech/different-diary.git"
+  },
+  "homepage": "https://github.com/oukeming64-tech/different-diary#readme",
+  "bugs": {
+    "url": "https://github.com/oukeming64-tech/different-diary/issues"
+  },
   "engines": {
     "node": ">=22.13.0"
   },
@@ -15,7 +24,7 @@
   "dependencies": {
     "dexie": "^4.4.4",
     "lucide-react": "^1.24.0",
-    "next": "16.2.6",
+    "next": "16.2.10",
     "react": "19.2.6",
     "react-dom": "19.2.6"
   },
@@ -28,7 +37,7 @@
     "@vitejs/plugin-react": "6.0.2",
     "@vitejs/plugin-rsc": "0.5.26",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.2.10",
     "fake-indexeddb": "^6.2.5",
     "react-server-dom-webpack": "19.2.6",
     "tailwindcss": "4.2.1",
@@ -37,6 +46,11 @@
     "vinext": "0.0.50",
     "vite": "8.0.13",
     "wrangler": "4.92.0"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "^8.5.10"
+    }
   },
   "type": "module"
 }

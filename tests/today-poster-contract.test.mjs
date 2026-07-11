@@ -31,7 +31,7 @@ test("adds a local-only poster as an auxiliary home tool", async () => {
 
   const page = await read("app/page.tsx");
   assert.match(page, /生成今天的海报/);
-  assert.match(page, /只用今天保存在本机的选择/);
+  assert.match(page, /把今天排成一张图/);
   const stateGrid = page.indexOf('className="state-grid state-index"');
   const posterTool = page.indexOf("poster-utility");
   assert.ok(stateGrid >= 0 && posterTool > stateGrid);
@@ -50,7 +50,7 @@ test("renders and downloads a 3:4 PNG without network, photos or private text", 
   assert.match(renderer, /canvas\.toBlob/);
   assert.match(renderer, /"image\/png"/);
   assert.match(component, /保存为图片/);
-  assert.match(component, /没有上传/);
+  assert.match(component, /不会上传/);
   assert.match(component, /不放照片、原话、AI 回应或身体数据/);
   assert.doesNotMatch(source, /\b(?:fetch|XMLHttpRequest|sendBeacon|WebSocket|EventSource)\b/);
   assert.doesNotMatch(source, /\.userText|\.responseText|thumbnailBlob|\.blob\b/);

@@ -62,9 +62,9 @@ export function PhotoFlow({
       {!previewUrl ? (
         <>
           <header className="photo-flow__heading">
-            <p className="photo-flow__eyebrow">本机照片记录</p>
+            <p className="photo-flow__eyebrow">照片记录</p>
             <h2>拍一张，先放在这里</h2>
-            <p>可以只保存在本机，不识别。</p>
+            <p>留下一张照片，或者继续写两句。</p>
           </header>
 
           {error && (
@@ -83,7 +83,7 @@ export function PhotoFlow({
             >
               <span>
                 <strong>{busy ? "正在准备照片…" : "拍照或选择图片"}</strong>
-                <small>照片会先在这台设备上准备</small>
+                <small>拍下眼前，或者从相册选择</small>
               </span>
               <span aria-hidden="true">→</span>
             </button>
@@ -118,12 +118,11 @@ export function PhotoFlow({
               unoptimized
               width={1200}
             />
-            <figcaption>这张照片还没有被识别或发送。</figcaption>
           </figure>
 
           <header className="photo-flow__heading photo-flow__heading--preview">
-            <p className="photo-flow__eyebrow">本机照片记录</p>
-            <h2>照片已经先留在本机</h2>
+            <p className="photo-flow__eyebrow">照片记录</p>
+            <h2>照片准备好了</h2>
             <p>接下来做什么，由你决定。</p>
           </header>
 

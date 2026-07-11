@@ -73,7 +73,7 @@ export function ActivityFlow({
           <span className="activity-mark" aria-hidden="true">
             <Footprints size={22} strokeWidth={1.7} />
           </span>
-          <p>本机运动记录</p>
+          <p>运动记录</p>
           <h2>刚才动了动</h2>
           <span>想记多少，就记多少。这里不算完成度。</span>
         </header>

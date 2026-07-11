@@ -38,7 +38,7 @@ test("keeps the first stage 4 slice explicit and optional", async () => {
   assert.match(page, /想让 AI 再听听/);
   assert.match(flow, /发送给 OpenRouter/);
   assert.match(flow, /照片、历史记录和身体资料不会一起发送/);
-  assert.match(flow, /Key 不会写进记录，也不会跟着导出/);
+  assert.match(flow, /Key 不会保存/);
   assert.match(flow, /离开或刷新后，需要重新连接/);
 });
 

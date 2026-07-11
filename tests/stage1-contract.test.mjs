@@ -61,7 +61,7 @@ test("provides an installable, same-origin-only PWA shell", async () => {
     read("app/layout.tsx"),
   ]);
 
-  assert.match(manifest, /name:\s*["']减肥拍拍乐["']/);
+  assert.match(manifest, /name:\s*["']不一样的日记["']/);
   assert.match(manifest, /start_url:\s*["']\/["']/);
   assert.match(manifest, /scope:\s*["']\/["']/);
   assert.match(manifest, /display:\s*["']standalone["']/);

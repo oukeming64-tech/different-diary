@@ -124,7 +124,7 @@ export function AIFlow({
             <KeyRound size={18} aria-hidden="true" />
             <h3 id="ai-connect-title">连接 OpenRouter</h3>
           </div>
-          <p>Key 不会写进记录，也不会跟着导出。离开或刷新后，需要重新连接。</p>
+          <p>Key 不会保存；离开或刷新后，需要重新连接。</p>
           <label>
             <span>OpenRouter Key</span>
             <input
@@ -145,13 +145,13 @@ export function AIFlow({
             type="button"
           >
             <KeyRound size={17} aria-hidden="true" />
-            {connecting ? "正在连接…" : "只在这次打开期间连接"}
+            {connecting ? "正在连接…" : "连接 OpenRouter"}
           </button>
         </section>
       ) : (
         <section className="ai-flow__conversation" aria-labelledby="ai-message-title">
           <div className="ai-flow__connected">
-            <span><Check size={15} aria-hidden="true" />已连接，只用于这次对话</span>
+            <span><Check size={15} aria-hidden="true" />已连接</span>
             <button onClick={disconnect} type="button">移除 Key</button>
           </div>
 

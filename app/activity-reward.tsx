@@ -1,6 +1,6 @@
 "use client";
 
-import { Footprints, History, Home as HomeIcon, ShieldCheck } from "lucide-react";
+import { Footprints, History, Home as HomeIcon } from "lucide-react";
 
 import { formatActivitySummary, type ActivityRecordV1 } from "../lib/stage3";
 import "./activity-reward.css";
@@ -46,11 +46,6 @@ export function ActivityReward({
         <br />
         你记得自己动过，这一下就算。
       </p>
-
-      <span className="saved-local activity-reward__local">
-        <ShieldCheck size={14} aria-hidden="true" />
-        运动记录只在这台设备上
-      </span>
 
       <div className="saved-actions activity-reward__actions">
         <button className="primary-button" onClick={onHome} type="button">

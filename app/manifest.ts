@@ -3,8 +3,8 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "减肥拍拍乐",
-    short_name: "拍拍乐",
+    name: "不一样的日记",
+    short_name: "不一样的日记",
     description: "一个不催促、不打分、可以离线使用的本机陪伴工具。",
     start_url: "/",
     scope: "/",

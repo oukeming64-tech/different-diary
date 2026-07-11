@@ -1,4 +1,4 @@
-/** Cloudflare Worker entry point for the 减肥拍拍乐 prototype. */
+/** Cloudflare Worker entry point for 不一样的日记. */
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 

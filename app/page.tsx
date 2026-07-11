@@ -252,8 +252,6 @@ export default function Home() {
   const [activities, setActivities] = useState<ActivityRecordV1[]>([]);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [lastSavedRecord, setLastSavedRecord] = useState<CheckInV1 | null>(null);
-  const [lastSavedAttachment, setLastSavedAttachment] =
-    useState<LocalImageAttachmentV1 | null>(null);
   const [lastSavedActivity, setLastSavedActivity] =
     useState<ActivityRecordV1 | null>(null);
   const [processedPhoto, setProcessedPhoto] = useState<ProcessedPhoto | null>(
@@ -264,7 +262,6 @@ export default function Home() {
   const [photoOrigin, setPhotoOrigin] = useState<"home" | "branch">("home");
   const [activityOrigin, setActivityOrigin] = useState<"home" | "branch">("home");
   const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
-  const [storageReady, setStorageReady] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -324,7 +321,6 @@ export default function Home() {
         setRecords(localRecords);
         setAttachments(localAttachments);
         setActivities(localActivities);
-        setStorageReady(true);
         setStorageError(null);
         if (localRecords.length === 0) {
           try {
@@ -337,7 +333,6 @@ export default function Home() {
         }
       } catch (error) {
         if (!active) return;
-        setStorageReady(false);
         setStorageError(
           isStage1StorageError(error)
             ? "这次暂时不能留在本机，但你仍然可以继续看回应。"
@@ -376,7 +371,6 @@ export default function Home() {
     setCurrentResponse(null);
     setDraftText("");
     setLastSavedRecord(null);
-    setLastSavedAttachment(null);
     setLastSavedActivity(null);
     setStorageError(null);
     clearPhotoDraft();
@@ -489,7 +483,6 @@ export default function Home() {
     if (localUser) return localUser;
     const identity = await ensureLocalIdentity();
     setLocalUser(identity);
-    setStorageReady(true);
     return identity;
   }
 
@@ -527,17 +520,12 @@ export default function Home() {
       setRecords((current) => [record, ...current]);
       if (savedPhoto) {
         setAttachments((current) => [savedPhoto.attachment, ...current]);
-        setLastSavedAttachment(savedPhoto.attachment);
-      } else {
-        setLastSavedAttachment(null);
       }
       setLastSavedActivity(null);
       setLastSavedRecord(record);
-      setStorageReady(true);
       if (savedPhoto) clearPhotoDraft();
       setView("saved");
     } catch {
-      setStorageReady(false);
       setStorageError(
         processedPhoto
           ? "这次没有成功放进本机。照片和你写下的内容还在这里。"
@@ -562,12 +550,9 @@ export default function Home() {
       setRecords((current) => [saved.checkIn, ...current]);
       setActivities((current) => [saved.activity, ...current]);
       setLastSavedRecord(saved.checkIn);
-      setLastSavedAttachment(null);
       setLastSavedActivity(saved.activity);
-      setStorageReady(true);
       setView("saved");
     } catch {
-      setStorageReady(false);
       setStorageError("这次没有成功记住。刚才填的内容还在这里，可以再试一次。");
     } finally {
       setIsSaving(false);
@@ -624,7 +609,7 @@ export default function Home() {
       );
       const link = document.createElement("a");
       link.href = url;
-      link.download = `减肥拍拍乐-本机记录-${new Date()
+      link.download = `不一样的日记-本机记录-${new Date()
         .toISOString()
         .slice(0, 10)}.json`;
       link.click();
@@ -687,16 +672,12 @@ export default function Home() {
         {view === "home" && (
           <div className="screen home-screen screen-enter motion-home">
             <header className="app-header">
-              <div className="brand" aria-label="减肥拍拍乐">
+              <div className="brand" aria-label="不一样的日记">
                 <span className="brand-orbit" aria-hidden="true">
-                  啪
+                  记
                 </span>
-                <span>减肥拍拍乐</span>
+                <span>不一样的日记</span>
               </div>
-              <span className="local-pill">
-                <ShieldCheck size={13} aria-hidden="true" />
-                {storageReady ? "只在本机" : "只用本机"}
-              </span>
             </header>
 
             <div className="home-intro motion-hero">
@@ -767,7 +748,7 @@ export default function Home() {
                 </span>
                 <span>
                   <strong>拍一张，先放在这里</strong>
-                  <small>只记录时，只留本机，不识别，也不上传</small>
+                  <small>留住眼前这一刻</small>
                 </span>
                 <ChevronRight size={18} aria-hidden="true" />
               </button>
@@ -808,7 +789,7 @@ export default function Home() {
                 </span>
                 <span>
                   <strong>生成今天的海报</strong>
-                  <small>只用今天保存在本机的选择</small>
+                  <small>把今天排成一张图</small>
                 </span>
                 <ChevronRight size={18} aria-hidden="true" />
               </button>
@@ -1026,17 +1007,7 @@ export default function Home() {
               </div>
               <p className="soft-kicker centered">已经轻轻放好了</p>
               <h2>已经记下了</h2>
-              <p className="saved-copy">
-                {lastSavedAttachment
-                  ? "照片没有被识别或发送。这里也不需要给今天打分。"
-                  : "这里不需要给今天打分。"}
-              </p>
-              <span className="saved-local">
-                <ShieldCheck size={14} aria-hidden="true" />
-                {lastSavedAttachment
-                  ? "照片只在这台设备上"
-                  : "只保存在这台设备上"}
-              </span>
+              <p className="saved-copy">这次不用打分，也不必再补齐什么。</p>
               <div className="saved-actions">
                 <button className="primary-button" onClick={goHome} type="button">
                   <HomeIcon size={18} aria-hidden="true" />回到首页
@@ -1157,7 +1128,6 @@ export default function Home() {
                   height={selectedAttachment.height}
                   width={selectedAttachment.width}
                 />
-                <figcaption>这张照片只保存在当前设备，没有被识别或发送。</figcaption>
               </figure>
             )}
             <div className="detail-blocks motion-detail-blocks editorial-sections">

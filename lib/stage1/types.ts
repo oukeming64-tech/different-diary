@@ -5,7 +5,7 @@ export const CURRENT_LOCAL_SCHEMA_VERSION = STAGE3_SCHEMA_VERSION;
 export const LOCAL_EXPORT_VERSION = 1 as const;
 export const LOCAL_EXPORT_VERSION_2 = 2 as const;
 export const LOCAL_EXPORT_VERSION_3 = 3 as const;
-export const LOCAL_EXPORT_PRODUCT = "减肥拍拍乐" as const;
+export const LOCAL_EXPORT_PRODUCT = "不一样的日记" as const;
 
 export const CHECK_IN_STATES = ["food", "rest", "tired", "visit"] as const;
 
