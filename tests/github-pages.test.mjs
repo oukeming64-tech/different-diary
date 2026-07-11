@@ -21,8 +21,7 @@ test("builds a scoped static GitHub Pages experience", async () => {
   for (const file of [
     "github-pages/index.html",
     "github-pages/main.tsx",
-    "github-pages/next-image.tsx",
-    "vite.pages.config.ts",
+    "vite.config.ts",
     ".github/workflows/pages.yml",
     "public/manifest.webmanifest",
     "public/download.html",
@@ -34,7 +33,7 @@ test("builds a scoped static GitHub Pages experience", async () => {
   const [packageJson, config, workflow, manifest, registration, worker] =
     await Promise.all([
       read("package.json"),
-      read("vite.pages.config.ts"),
+      read("vite.config.ts"),
       read(".github/workflows/pages.yml"),
       read("public/manifest.webmanifest"),
       read("app/pwa-register.tsx"),
@@ -42,8 +41,9 @@ test("builds a scoped static GitHub Pages experience", async () => {
     ]);
 
   assert.match(packageJson, /"build:pages"/);
+  assert.match(packageJson, /--base=\/different-diary\//);
   assert.match(packageJson, /build-standalone-html\.mjs/);
-  assert.match(config, /base:\s*["']\/different-diary\/["']/);
+  assert.match(config, /root:\s*["']github-pages["']/);
   assert.match(workflow, /actions\/deploy-pages@v4/);
   assert.match(workflow, /npm run build:pages/);
   assert.match(manifest, /"start_url":\s*"\.\/"/);

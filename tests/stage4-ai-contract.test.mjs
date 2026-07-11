@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
+import { readAppSource } from "./app-source.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -32,7 +33,7 @@ test("keeps the first stage 4 slice explicit and optional", async () => {
   }
 
   const [page, flow] = await Promise.all([
-    read("app/page.tsx"),
+    readAppSource(),
     read("app/ai-flow.tsx"),
   ]);
   assert.match(page, /想让 AI 再听听/);
@@ -44,7 +45,7 @@ test("keeps the first stage 4 slice explicit and optional", async () => {
 
 test("shows new users how to reach optional AI without making it a core entry", async () => {
   const [page, guide] = await Promise.all([
-    read("app/page.tsx"),
+    readAppSource(),
     read("app/onboarding-guide.tsx"),
   ]);
 

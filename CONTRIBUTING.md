@@ -13,7 +13,7 @@
 需要 Node.js 22.15 或更高版本。
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -22,7 +22,10 @@ npm run dev
 ```bash
 npm run lint
 npm test
+npm run build:pages
 ```
+
+界面入口在 `app/page.tsx`，页面职责拆在 `app/diary/`；本机数据与各阶段能力分别位于 `lib/stage1/` 到 `lib/stage4/`。当前开发、测试与 GitHub Pages 发布都使用 Vite，不需要部署 Worker、数据库或云存储。
 
 ## 产品边界
 

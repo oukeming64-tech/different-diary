@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import {
   type ChangeEvent,
   useId,
@@ -109,13 +108,12 @@ export function PhotoFlow({
       ) : (
         <>
           <figure className="photo-flow__preview">
-            <Image
+            {/* The preview is a short-lived local Blob URL. */}
+            <img
               alt="准备保存在本机的照片预览"
               className="photo-flow__preview-image"
               height={900}
-              sizes="(max-width: 520px) calc(100vw - 40px), 432px"
               src={previewUrl}
-              unoptimized
               width={1200}
             />
           </figure>

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { readAppSource } from "./app-source.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -78,12 +79,12 @@ function propertyValue(declarations, property) {
 }
 
 test("loads the editorial override after the base and motion layers", async () => {
-  const layout = await read("app/layout.tsx");
+  const layout = await read("github-pages/main.tsx");
   const importPosition = (path) =>
-    layout.search(new RegExp(`import\\s+["']\\./${path}\\.css["']`));
+    layout.search(new RegExp(`import\\s+["']\\.\\./app/${path}\\.css["']`));
   const editorialImport = importPosition("editorial");
 
-  assert.notEqual(editorialImport, -1, "layout must import app/editorial.css");
+  assert.notEqual(editorialImport, -1, "the browser entry must import app/editorial.css");
   assert.ok(
     editorialImport > importPosition("globals") &&
       editorialImport > importPosition("motion"),
@@ -92,7 +93,7 @@ test("loads the editorial override after the base and motion layers", async () =
 });
 
 test("keeps four single-click entries without ordinal or repeated card chrome", async () => {
-  const page = await read("app/page.tsx");
+  const page = await readAppSource();
   const entryLabels = [
     "我想吃点东西",
     "我今天不想练",
@@ -129,7 +130,7 @@ test("keeps four single-click entries without ordinal or repeated card chrome", 
 
 test("keeps the experience inside one main surface with fine separators", async () => {
   const [page, editorial] = await Promise.all([
-    read("app/page.tsx"),
+    readAppSource(),
     readOptional("app/editorial.css"),
   ]);
   const mainSurfaces = page.match(
@@ -212,7 +213,7 @@ test("flattens the primary list surfaces instead of restyling them as cards", as
 
 test("uses a wired hairline separator as the editorial rhythm", async () => {
   const [page, editorial] = await Promise.all([
-    read("app/page.tsx"),
+    readAppSource(),
     readOptional("app/editorial.css"),
   ]);
 
@@ -283,11 +284,11 @@ test("preserves keyboard focus and reduced-motion behavior", async () => {
 
 test("keeps the ambient scene and semantic motion wiring intact", async () => {
   const [layout, page] = await Promise.all([
-    read("app/layout.tsx"),
-    read("app/page.tsx"),
+    read("github-pages/main.tsx"),
+    readAppSource(),
   ]);
 
-  assert.match(layout, /import ["']\.\/motion\.css["']/);
+  assert.match(layout, /import ["']\.\.\/app\/motion\.css["']/);
   assert.match(page, /<AmbientScene\b/);
   for (const className of [
     "motion-stage",

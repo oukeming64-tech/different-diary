@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
+import { readAppSource } from "./app-source.mjs";
 
 const root = new URL("../", import.meta.url);
 const processorPath = "lib/stage2/image-processor.ts";
@@ -97,7 +98,7 @@ test("forbids network APIs in processing and record-only code", async () => {
 
 test("offers a user-triggered image picker with explicit no-send copy", async () => {
   const [page, photoFlow] = await Promise.all([
-    read("app/page.tsx"),
+    readAppSource(),
     read("app/photo-flow.tsx"),
   ]);
   const photoUi = `${page}\n${photoFlow}`;
@@ -156,7 +157,7 @@ test("keeps photos out of the service-worker cache", async () => {
 });
 
 test("keeps the four emotional entries primary and photos auxiliary", async () => {
-  const page = await read("app/page.tsx");
+  const page = await readAppSource();
   const fourEntryLabels = [
     "我想吃点东西",
     "我今天不想练",
@@ -178,11 +179,10 @@ test("keeps the four emotional entries primary and photos auxiliary", async () =
 });
 
 test("keeps the stage 2 record-only photo path free of login, cloud storage and AI calls", async () => {
-  const [photoFlow, processor, recordOnly, hosting, packageJson] = await Promise.all([
+  const [photoFlow, processor, recordOnly, packageJson] = await Promise.all([
     read("app/photo-flow.tsx"),
     readOptional(processorPath),
     readOptional(recordOnlyPath),
-    read(".openai/hosting.json").then(JSON.parse),
     read("package.json").then(JSON.parse),
   ]);
   const firstSliceSource = `${photoFlow}\n${processor}\n${recordOnly}`;
@@ -193,8 +193,8 @@ test("keeps the stage 2 record-only photo path free of login, cloud storage and 
 
   assert.equal(await exists("app/api"), false);
   assert.equal(await exists("pages/api"), false);
-  assert.equal(hosting.d1, null);
-  assert.equal(hosting.r2, null);
+  assert.equal(await exists(".openai/hosting.json"), false);
+  assert.equal(await exists("worker/index.ts"), false);
   assert.doesNotMatch(
     firstSliceSource,
     /\b(?:fetch|XMLHttpRequest|sendBeacon|AIProvider|OpenAI|Anthropic|Qwen|OpenRouter|modelKey|signIn|signOut|AuthAdapter|SyncAdapter|CloudStorageAdapter)\b/i,
