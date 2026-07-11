@@ -83,12 +83,13 @@ export function useDiaryController() {
 
   useEffect(() => {
     if (!isReady || !wasEmptyOnFirstOpen) return;
-    let shouldShow = false;
-    try {
-      shouldShow = window.localStorage.getItem(ONBOARDING_PREFERENCE_KEY) !== "done";
-    } catch {
-      shouldShow = true;
-    }
+    const shouldShow = (() => {
+      try {
+        return window.localStorage.getItem(ONBOARDING_PREFERENCE_KEY) !== "done";
+      } catch {
+        return true;
+      }
+    })();
     if (!shouldShow) return;
     const timer = window.setTimeout(() => setShowOnboarding(true), 0);
     return () => window.clearTimeout(timer);
