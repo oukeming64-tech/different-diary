@@ -3,8 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { createTodayPosterModel } from "../../lib/poster";
 import {
   clearAllLocalDataAndRecreateIdentity,
-  createLocalExportJson,
-  createLocalExportJsonV2,
   deleteCheckIn,
   ensureLocalIdentity,
   isStage1StorageError,
@@ -15,7 +13,8 @@ import {
   type LocalImageAttachmentV1,
   type LocalUserV1,
 } from "../../lib/stage1";
-import { createLocalExportJsonV3, listActivities } from "../../lib/stage3";
+import { listActivities } from "../../lib/stage3";
+import { createFullBackupJson, restoreFullBackup } from "../../lib/backup";
 import { groupLabel, localDateKey } from "./model";
 
 export function useLocalDiaryLibrary() {
@@ -115,10 +114,19 @@ export function useLocalDiaryLibrary() {
     );
   }
 
-  async function createExport() {
-    if (activities.length) return createLocalExportJsonV3();
-    if (attachments.length) return createLocalExportJsonV2();
-    return createLocalExportJson();
+  const createExport = createFullBackupJson;
+
+  async function restoreLibrary(text: string) {
+    const result = await restoreFullBackup(text);
+    const identity = await ensureLocalIdentity();
+    const [savedRecords, savedAttachments, savedActivities] = await Promise.all([
+      listCheckIns(identity.id), listAttachments(identity.id), listActivities(identity.id),
+    ]);
+    setLocalUser(identity);
+    setRecords(savedRecords);
+    setAttachments(savedAttachments);
+    setActivities(savedActivities);
+    return result;
   }
 
   async function clearLibrary() {
@@ -146,6 +154,7 @@ export function useLocalDiaryLibrary() {
     addActivity,
     removeRecord,
     createExport,
+    restoreLibrary,
     clearLibrary,
   };
 }
