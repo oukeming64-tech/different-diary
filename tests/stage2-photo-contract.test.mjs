@@ -102,7 +102,7 @@ test("offers a user-triggered image picker with explicit no-send copy", async ()
     read("app/photo-flow.tsx"),
   ]);
   const photoUi = `${page}\n${photoFlow}`;
-  const fileInputs = [...photoUi.matchAll(/<input\b[^>]*>/g)].map(
+  const fileInputs = [...photoFlow.matchAll(/<input\b[^>]*>/g)].map(
     (match) => match[0],
   );
   const imageInput = fileInputs.find((input) =>
