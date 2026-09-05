@@ -773,3 +773,13 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+.backup-file-picker:focus-within {
+  outline: 2px solid var(--c-ink-soft);
+  outline-offset: 3px;
+}
+
+/* Keep decorative off-screen glows from panning the data form on file-input focus. */
+.data-screen {
+  overflow-x: clip;
+}

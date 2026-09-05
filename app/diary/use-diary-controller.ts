@@ -19,6 +19,7 @@ import {
 } from "../../lib/stage3";
 import { branchFor, type DiaryView } from "./model";
 import { useLocalDiaryLibrary } from "./use-local-diary-library";
+import { MAX_BACKUP_BYTES } from "../../lib/backup";
 import { usePhotoDraft } from "./use-photo-draft";
 
 export function useDiaryController() {
@@ -35,6 +36,7 @@ export function useDiaryController() {
   const [activityOrigin, setActivityOrigin] = useState<"home" | "branch">("home");
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -61,6 +63,7 @@ export function useDiaryController() {
     addActivity,
     removeRecord,
     createExport,
+    restoreLibrary,
     clearLibrary,
   } = library;
   const {
@@ -295,20 +298,29 @@ export function useDiaryController() {
       );
       const link = document.createElement("a");
       link.href = url;
-      link.download = `不一样的日记-本机记录-${new Date().toISOString().slice(0, 10)}.json`;
+      link.download = `不一样的日记-完整备份-${new Date().toISOString().slice(0, 10)}.json`;
       link.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 0);
-      setDataNotice(
-        attachments.length
-          ? "记录、运动详情和照片索引已经生成；照片文件仍只留在本机。"
-          : activities.length
-            ? "记录和运动详情已经生成副本，本机内容没有变化。"
-            : "副本已经生成，本机记录没有变化。",
-      );
-    } catch {
-      setDataNotice("暂时没有生成文件，本机记录没有变化。");
+      setDataNotice("完整备份已生成，包含记录、照片和运动详情。请把下载文件妥善保存。");
+    } catch (error) {
+      setDataNotice(error instanceof Error ? error.message : "暂时没有生成文件，本机记录没有变化。");
     } finally {
       setIsExporting(false);
+    }
+  }
+
+  async function restoreData(file: File) {
+    if (isRestoring || isExporting || isClearing) return;
+    setIsRestoring(true);
+    setDataNotice(null);
+    try {
+      if (file.size > MAX_BACKUP_BYTES) throw new Error("备份文件超过 128 MB，未导入。");
+      const result = await restoreLibrary(await file.text());
+      setDataNotice(`恢复完成：新增 ${result.added} 条，重复 ${result.duplicates} 条，冲突 ${result.conflicts} 条。冲突项保留本机版本。`);
+    } catch (error) {
+      setDataNotice(error instanceof Error ? error.message : "恢复没有完成，现有记录仍保留。请检查文件或本机剩余空间。");
+    } finally {
+      setIsRestoring(false);
     }
   }
 
@@ -373,6 +385,7 @@ export function useDiaryController() {
     isSaving,
     isDeleting,
     isExporting,
+    isRestoring,
     isClearing,
     confirmDelete,
     setConfirmDelete,
@@ -393,6 +406,7 @@ export function useDiaryController() {
     openRecord,
     removeSelectedRecord,
     exportData,
+    restoreData,
     clearAllData,
   };
 }

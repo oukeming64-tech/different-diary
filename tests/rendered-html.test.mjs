@@ -40,7 +40,7 @@ test("keeps product data device-local and free of server capabilities", async ()
   assert.match(appSource, /data-testid={`branch-\$\{branch\.id\}`}/);
   assert.match(appSource, /ensureLocalIdentity/);
   assert.match(appSource, /saveCheckIn/);
-  assert.match(appSource, /createLocalExportJson/);
+  assert.match(appSource, /createFullBackupJson/);
   assert.doesNotMatch(
     appSource,
     /axios|sessionStorage|signIn|signOut|SyncAdapter/,

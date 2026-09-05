@@ -195,9 +195,10 @@ export function DetailScreen({ controller }: { controller: DiaryController }) {
 
 export function DataScreen({ controller }: { controller: DiaryController }) {
   const {
-    attachments,
     dataNotice,
     isExporting,
+    isRestoring,
+    restoreData,
     isClearing,
     confirmClear,
     setConfirmClear,
@@ -221,12 +222,23 @@ export function DataScreen({ controller }: { controller: DiaryController }) {
       <section className="data-card motion-data-card data-row data-row-action">
         <span className="data-card-icon"><FileText size={20} /></span>
         <div>
-          <h3>导出一份副本</h3>
-          <p>{attachments.length ? "生成记录、运动详情与照片索引；照片文件仍留在本机。" : "生成包含运动详情的 JSON 文件，不会删除或上传原记录。"}</p>
+          <h3>完整备份</h3>
+          <p>记录、照片和运动详情一起保存到一个文件，方便换机。文件只下载到你的设备。</p>
         </div>
-        <button className="secondary-button" disabled={isExporting} onClick={() => void exportData()} type="button">
-          <Download size={17} aria-hidden="true" />{isExporting ? "正在生成…" : "导出数据"}
+        <button className="secondary-button" disabled={isExporting || isRestoring || isClearing} onClick={() => void exportData()} type="button">
+          <Download size={17} aria-hidden="true" />{isExporting ? "正在生成…" : "保存完整备份"}
         </button>
+      </section>
+      <section className="data-card motion-data-card data-row data-row-action">
+        <span className="data-card-icon"><Database size={20} /></span>
+        <div><h3>从备份恢复</h3><p>选择完整备份文件。已有记录会保留；重复项跳过，冲突项保留本机版本。</p></div>
+        <label className="secondary-button backup-file-picker" style={{ position: "relative" }}>
+          {isRestoring ? "正在恢复…" : "选择备份文件"}
+          <input type="file" accept=".json,application/json" aria-label="选择完整备份文件"
+            disabled={isRestoring || isExporting || isClearing}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", padding: 0, margin: 0, opacity: 0, cursor: "pointer" }}
+            onChange={(event) => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; if (file) void restoreData(file); }} />
+        </label>
       </section>
       {dataNotice && <div className="calm-notice" role="status">{dataNotice}</div>}
       <section className="data-card danger-card motion-data-card data-row data-row-danger">
@@ -242,7 +254,7 @@ export function DataScreen({ controller }: { controller: DiaryController }) {
               <button className="secondary-button" onClick={() => setConfirmClear(false)} type="button">先不清空</button>
               <button
                 className="danger-button solid"
-                disabled={isClearing}
+                disabled={isClearing || isRestoring || isExporting}
                 onClick={() => void clearAllData()}
                 type="button"
               >

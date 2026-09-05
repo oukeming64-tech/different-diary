@@ -12,6 +12,8 @@
 
 需要 Node.js 22.15 或更高版本。
 
+更新 React 时，请将 `react` 与 `react-dom` 保持在同一版本，并同步锁文件；只更新其中一个可能使安装在依赖检查阶段失败。
+
 ```bash
 npm ci
 npm run dev
